@@ -1,4 +1,4 @@
-package org.example.bruhtato.Utils;
+package BruhTato.Utils;
 
 public enum EntityType {
     PLAYER, ENEMY, OBSTACLE, WALL

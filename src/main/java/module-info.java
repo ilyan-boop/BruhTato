@@ -4,6 +4,6 @@ module org.example.bruhtato {
 
     requires com.almasb.fxgl.all;
 
-    opens org.example.bruhtato to javafx.fxml;
-    exports org.example.bruhtato;
+    opens BruhTato to javafx.fxml;
+    exports BruhTato;
 }
