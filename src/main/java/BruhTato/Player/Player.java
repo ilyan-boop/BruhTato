@@ -21,10 +21,13 @@ public class Player {
 
         Entity entity = entityBuilder()
                 .type(EntityType.PLAYER).at(100, 100)
-                .bbox(new HitBox(BoundingShape.box(50, 50)))
+                // Top circle cap
+                .bbox(new HitBox(new Point2D(18, 8), BoundingShape.circle(20)))
+                // Bottom circle cap
+                .bbox(new HitBox(new Point2D(18, 28), BoundingShape.circle(20)))
                 .with(physics)
                 .with(new CollidableComponent(true))
-                .viewWithBBox(texture("Bruhtato_FullHealth.png", 75, 75))
+                .view(texture("Bruhtato_FullHealth.png", 75, 75))
                 .buildAndAttach();
     }
 

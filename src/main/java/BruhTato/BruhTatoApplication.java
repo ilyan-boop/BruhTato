@@ -20,6 +20,8 @@ public class BruhTatoApplication extends GameApplication {
         settings.setHeight(600);
         settings.setTitle("Bruhtato");
         settings.setVersion("1.0");
+
+        settings.setDeveloperMenuEnabled(true);
     }
 
     @Override
@@ -57,6 +59,8 @@ public class BruhTatoApplication extends GameApplication {
 
             factory.spawnObstacle(x, y, w, h);
         }
+
+
     }
 
     @Override
