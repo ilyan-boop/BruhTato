@@ -7,13 +7,16 @@ import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxgl.physics.PhysicsComponent;
 import com.almasb.fxgl.physics.box2d.dynamics.BodyType;
+import javafx.geometry.Point2D;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class Player {
+    private Entity entity;
+    private PhysicsComponent physics;
 
     public Player() {
-        PhysicsComponent physics = new PhysicsComponent();
+        physics = new PhysicsComponent();
         physics.setBodyType(BodyType.DYNAMIC);
 
         Entity entity = entityBuilder()
@@ -25,5 +28,13 @@ public class Player {
                 .buildAndAttach();
     }
 
+    public void moveUp() { physics.setVelocityY(-200); }
+    public void moveDown() { physics.setVelocityY(200); }
+    public void moveLeft() { physics.setVelocityX(-200); }
+    public void moveRight() { physics.setVelocityX(200); }
+
+    public void stop() {
+        physics.setLinearVelocity(Point2D.ZERO);
+    }
 
 }
