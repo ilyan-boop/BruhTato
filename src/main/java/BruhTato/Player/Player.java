@@ -24,7 +24,7 @@ public class Player {
                 .bbox(new HitBox(BoundingShape.box(50, 50)))
                 .with(physics)
                 .with(new CollidableComponent(true))
-                .viewWithBBox("src/main/resources/BRUHTATO_ASSETS/BRUHTATO/Bruhtato_FullHealth.png")
+                .viewWithBBox(texture("Bruhtato_FullHealth.png", 75, 75))
                 .buildAndAttach();
     }
 
