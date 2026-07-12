@@ -12,4 +12,19 @@ import javafx.geometry.Point2D;
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class Player {
+
+    public Player() {
+        PhysicsComponent physics = new PhysicsComponent();
+        physics.setBodyType(BodyType.DYNAMIC);
+
+        Entity entity = entityBuilder()
+                .type(EntityType.PLAYER).at(100, 100)
+                .bbox(new HitBox(BoundingShape.box(50, 50)))
+                .with(physics)
+                .with(new CollidableComponent(true))
+                .viewWithBBox("src/main/resources/BRUHTATO_ASSETS/BRUHTATO/Bruhtato_FullHealth.png")
+                .buildAndAttach();
+    }
+
+
 }
