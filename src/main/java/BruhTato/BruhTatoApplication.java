@@ -16,8 +16,9 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setWidth(800);
-        settings.setHeight(600);
+        //RESOLUTION \/
+        settings.setWidth(1920);
+        settings.setHeight(1080);
         settings.setTitle("Bruhtato");
         settings.setVersion("1.0");
 
@@ -35,6 +36,7 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void initGame() {
+        final int OBSTACLE_COUNT = 10;
         factory = new GameFactory();
 
         // Disable top-down world gravity
@@ -45,11 +47,11 @@ public class BruhTatoApplication extends GameApplication {
 
         // Spawn random obstacles
         Random rand = new Random();
-        for (int i = 0; i < 8; i++) {
-            double w = rand.nextInt(60) + 40;
-            double h = rand.nextInt(60) + 40;
-            double x = rand.nextInt(700) + 50;
-            double y = rand.nextInt(500) + 50;
+        for (int i = 0; i < OBSTACLE_COUNT; i++) {
+            double w = 100;
+            double h = 100;
+            double x = rand.nextInt(1520)+200;
+            double y = rand.nextInt(680)+200;
 
             // Simple boundary buffer check to prevent trapping player at spawn (100, 100)
             if (x < 200 && y < 200) {
