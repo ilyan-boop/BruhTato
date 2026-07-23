@@ -50,8 +50,8 @@ public class BruhTatoApplication extends GameApplication {
         for (int i = 0; i < OBSTACLE_COUNT; i++) {
             double w = 100;
             double h = 100;
-            double x = rand.nextInt(1520)+200;
-            double y = rand.nextInt(680)+200;
+            double x = rand.nextInt(1820)+100;
+            double y = rand.nextInt(980)+100;
 
             // Simple boundary buffer check to prevent trapping player at spawn (100, 100)
             if (x < 200 && y < 200) {
@@ -61,6 +61,14 @@ public class BruhTatoApplication extends GameApplication {
 
             factory.spawnObstacle(x, y, w, h);
         }
+
+        //SIDE BORDERS
+        factory.spawnObstacle(-50,0,1,1080);
+        factory.spawnObstacle(1970,0,1,1080);
+
+        //TOP BOTTOM BORDERS
+        factory.spawnObstacle(0,-50,1920,1);
+        factory.spawnObstacle(0,1130,1920,1);
 
 
     }
