@@ -1,5 +1,6 @@
 package BruhTato;
 
+import BruhTato.Items.GameFactory;
 import BruhTato.Utils.BorderFactory;
 import BruhTato.Player.Player;
 import BruhTato.Screens.HUD;
@@ -38,11 +39,19 @@ public class BruhTatoApplication extends GameApplication {
     protected void initGame() {
         getPhysicsWorld().setGravity(0, 0);
 
-        // 1. Spawn screen edge borders
+        // 1. Register the factory to build entities
+        getGameWorld().addEntityFactory(new GameFactory());
+
+        // 2. Spawn screen edge borders
         BorderFactory.spawnScreenBorders();
 
-        // 2. Spawn player
+        // 3. Spawn player
         player = new Player();
+
+        // 4. Spawn enemy in the exact center of the screen
+        double centerX = getAppWidth() / 2.0;
+        double centerY = getAppHeight() / 2.0;
+        spawn("enemy", centerX, centerY);
     }
 
     @Override
