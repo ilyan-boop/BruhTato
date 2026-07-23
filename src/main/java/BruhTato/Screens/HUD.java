@@ -9,10 +9,10 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class HUD {
 
-    private Text healthText;
-    private Text waveText;
-    private Text scoreText;
-    private VBox container;
+    private final Text healthText;
+    private final Text waveText;
+    private final Text scoreText;
+    private final VBox container;
 
     public HUD() {
 

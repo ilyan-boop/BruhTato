@@ -16,17 +16,5 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class GameFactory implements EntityFactory {
 
-    public void spawnObstacle(double x, double y, double w, double h) {
-        PhysicsComponent physics = new PhysicsComponent();
-        physics.setBodyType(BodyType.STATIC); // Static means it's an unmovable wall
 
-        entityBuilder()
-                .type(EntityType.OBSTACLE)
-                .at(x, y)
-                .bbox(new HitBox(BoundingShape.box(w, h)))
-                .view(new Rectangle(w, h, Color.RED))
-                .with(physics)
-                .with(new CollidableComponent(true))
-                .buildAndAttach();
-    }
 }
