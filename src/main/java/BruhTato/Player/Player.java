@@ -21,7 +21,7 @@ public class Player {
     private int currentHealth = 100;
     private boolean isPushingBorder = false;
 
-    // Damage over time tracking
+
     private double borderDamageTimer = 0.0;
     private final double DAMAGE_INTERVAL = 1.0; // Every 1.0 seconds
     private final int BORDER_DAMAGE = 5;
@@ -49,12 +49,12 @@ public class Player {
         weaponComponent.swing();
     }
 
-    // --- Movement & Border Collisions ---
+
     private void tryMove(double dx, double dy) {
         entity.translateX(dx);
         entity.translateY(dy);
 
-        // Block movement if player tries to step through a BORDER entity
+
         boolean hitsBorder = getGameWorld()
                 .getEntitiesByType(EntityType.BORDER)
                 .stream()
@@ -68,9 +68,8 @@ public class Player {
         }
     }
 
-    // Call this inside BruhTatoApplication onUpdate(double tpf)
     public void updateBorderDamage(double tpf) {
-        // If player held a movement key into a border this frame
+
         if (isPushingBorder) {
             borderDamageTimer += tpf;
 
@@ -79,11 +78,9 @@ public class Player {
                 borderDamageTimer = 0.0; // Reset 1-second interval
             }
         } else {
-            // Reset timer as soon as player stops pushing into the wall
             borderDamageTimer = 0.0;
         }
 
-        // Reset flag for the next frame
         isPushingBorder = false;
     }
 
@@ -93,7 +90,6 @@ public class Player {
 
         if (currentHealth <= 0) {
             System.out.println("Player Defeated!");
-            // Handle player death / game over screen here
         }
     }
 

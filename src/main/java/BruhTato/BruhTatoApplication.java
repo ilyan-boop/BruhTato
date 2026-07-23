@@ -39,16 +39,12 @@ public class BruhTatoApplication extends GameApplication {
     protected void initGame() {
         getPhysicsWorld().setGravity(0, 0);
 
-        // 1. Register the factory to build entities
         getGameWorld().addEntityFactory(new GameFactory());
 
-        // 2. Spawn screen edge borders
         BorderFactory.spawnScreenBorders();
 
-        // 3. Spawn player
         player = new Player();
 
-        // 4. Spawn enemy in the exact center of the screen
         double centerX = getAppWidth() / 2.0;
         double centerY = getAppHeight() / 2.0;
         spawn("enemy", centerX, centerY);
@@ -68,7 +64,6 @@ public class BruhTatoApplication extends GameApplication {
     @Override
     protected void onUpdate(double tpf) {
         if (player != null) {
-            // Continuously track contact time against borders to apply 5 damage/sec
             player.updateBorderDamage(tpf);
         }
     }
