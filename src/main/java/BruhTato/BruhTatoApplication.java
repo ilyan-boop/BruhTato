@@ -7,6 +7,8 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.input.UserAction;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
+
 import java.util.Random;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -35,6 +37,8 @@ public class BruhTatoApplication extends GameApplication {
         onKey(KeyCode.S, () -> player.moveDown());
         onKey(KeyCode.A, () -> player.moveLeft());
         onKey(KeyCode.D, () -> player.moveRight());
+
+        onBtnDown(MouseButton.PRIMARY, () -> player.attack());
     }
 
     @Override
