@@ -2,8 +2,10 @@ package BruhTato;
 
 import BruhTato.Player.Player;
 import BruhTato.Items.GameFactory;
+import BruhTato.Screens.HUD;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
+import com.almasb.fxgl.input.UserAction;
 import javafx.scene.input.KeyCode;
 import java.util.Random;
 
@@ -13,6 +15,7 @@ public class BruhTatoApplication extends GameApplication {
 
     private Player player;
     private GameFactory factory;
+    private HUD hud;
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -27,7 +30,7 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void initInput() {
-        // Direct key mapping hookups
+        // onKey automatically executes move() every tick while key is down
         onKey(KeyCode.W, () -> player.moveUp());
         onKey(KeyCode.S, () -> player.moveDown());
         onKey(KeyCode.A, () -> player.moveLeft());
@@ -75,9 +78,11 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void onUpdate(double tpf) {
-        // Friction baseline: Reset velocities so player stops when keys are released
-        if (player != null) {
-            player.stop();
-        }
+    }
+
+    @Override
+    protected void initUI(){
+        hud = new HUD();
+        hud.attachToGame();
     }
 }
