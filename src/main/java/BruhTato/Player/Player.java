@@ -22,9 +22,12 @@ public class Player {
     private int currentHealth = 100;
     private boolean isPushingBorder = false;
 
+    // Invincibility frame (i-frame) parameters
+    private boolean isInvincible = false;
+    private final double INVINCIBILITY_DURATION = 2.0; // 2 Seconds
 
     private double borderDamageTimer = 0.0;
-    private final double DAMAGE_INTERVAL = 1.0; // Every 1.0 seconds
+    private final double DAMAGE_INTERVAL = 1.0;
     private final int BORDER_DAMAGE = 5;
 
     public Player() {
@@ -51,11 +54,9 @@ public class Player {
         weaponComponent.swing();
     }
 
-
     private void tryMove(double dx, double dy) {
         entity.translateX(dx);
         entity.translateY(dy);
-
 
         boolean hitsBorder = getGameWorld()
                 .getEntitiesByType(EntityType.BORDER)
@@ -64,45 +65,75 @@ public class Player {
 
         if (hitsBorder) {
             isPushingBorder = true;
-
             entity.translateX(-dx);
             entity.translateY(-dy);
         }
     }
 
     public void updateBorderDamage(double tpf) {
-
         if (isPushingBorder) {
             borderDamageTimer += tpf;
-
             if (borderDamageTimer >= DAMAGE_INTERVAL) {
                 takeDamage(BORDER_DAMAGE);
-                borderDamageTimer = 0.0; // Reset 1-second interval
+                borderDamageTimer = 0.0;
             }
         } else {
             borderDamageTimer = 0.0;
         }
-
         isPushingBorder = false;
     }
 
+    public void takeDamageWithKnockback(int amount, Point2D direction, double distance) {
+        if (isInvincible) return; // Block damage & knockback during i-frames
+
+        takeDamage(amount);
+        applyKnockback(direction, distance);
+    }
+
+    public void applyKnockback(Point2D direction, double distance) {
+        double dx = direction.getX() * distance;
+        double dy = direction.getY() * distance;
+
+        entity.translateX(dx);
+        entity.translateY(dy);
+
+        boolean hitsBorder = getGameWorld()
+                .getEntitiesByType(EntityType.BORDER)
+                .stream()
+                .anyMatch(entity::isColliding);
+
+        if (hitsBorder) {
+            entity.translateX(-dx);
+            entity.translateY(-dy);
+        }
+    }
+
     public void takeDamage(int amount) {
+        if (isInvincible) return; // Block damage during i-frames
+
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
 
-        // --- Red Flash Visual Effect ---
+        // Trigger Invincibility State
+        isInvincible = true;
+
+        // Visual Effects: Red Flash + Opacity Blink
         ColorAdjust redFlash = new ColorAdjust();
-        redFlash.setHue(-0.005);      // Shift hue to red spectrum
-        redFlash.setSaturation(1.0); // Boost color intensity
-
-        // Apply effect to the entity view
+        redFlash.setHue(-0.005);
+        redFlash.setSaturation(1.0);
         entity.getViewComponent().getParent().setEffect(redFlash);
+        entity.getViewComponent().setOpacity(0.5);
 
-        // Remove the flash effect after 0.15 seconds
+        // Remove red tint flash after 0.15s
         runOnce(() -> {
             entity.getViewComponent().getParent().setEffect(null);
         }, javafx.util.Duration.seconds(0.15));
-        // -------------------------------
+
+        // Expire invincibility and restore opacity after 2.0 seconds
+        runOnce(() -> {
+            isInvincible = false;
+            entity.getViewComponent().setOpacity(1.0);
+        }, javafx.util.Duration.seconds(INVINCIBILITY_DURATION));
 
         if (currentHealth <= 0) {
             System.out.println("Player Defeated!");
