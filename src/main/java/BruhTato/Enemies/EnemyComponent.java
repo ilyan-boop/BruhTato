@@ -9,17 +9,17 @@ import javafx.geometry.Point2D;
 
 public class EnemyComponent extends Component {
 
-    private double speed = 3.5; // Fixed per-tick step matching Player movement
+    private double speed; // Fixed per-tick step matching Player movement
 
     private int contactDamage = 10;
-    private double knockbackDistance = 50.0;
+    private double knockbackDistance = 100.0;
 
     public EnemyComponent(double speed) {
         this.speed = speed;
     }
 
     public EnemyComponent() {
-        this(3.5);
+        this(1.0);
     }
 
     @Override
