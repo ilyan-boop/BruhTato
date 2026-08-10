@@ -17,11 +17,11 @@ public class GameFactory implements EntityFactory {
 
     @Spawns("enemy")
     public Entity newEnemy(SpawnData data) {
-        double radius = 75.0; // Radius matching enemy body size
+        double radius = 50.0; // Radius matching enemy body size
 
         return entityBuilder(data)
                 .type(EntityType.ENEMY)
-                .bbox(new HitBox(new Point2D(0, 0), BoundingShape.circle(radius)))
+                .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(radius)))
                 .view(texture("Melee_Enemy_FullHealth.png", 150, 150))
                 .with(new CollidableComponent(true))
                 .with(new EnemyComponent(1.5)) // Fixed speed matching player steps
