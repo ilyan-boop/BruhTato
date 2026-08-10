@@ -1,6 +1,7 @@
 package BruhTato.Screens;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -42,5 +43,23 @@ public class HUD {
         if (waveText != null) {
             waveText.setText("WAVE: " + waveNumber);
         }
+    }
+
+    // Renders centered Game Over message on the screen
+    public void showGameOver() {
+        Text gameOverTitle = getUIFactoryService().newText("GAME OVER", Color.RED, 80.0);
+        Text gameOverSubtext = getUIFactoryService().newText("You Were Defeated", Color.WHITE, 30.0);
+
+        VBox gameOverBox = new VBox(15, gameOverTitle, gameOverSubtext);
+        gameOverBox.setAlignment(Pos.CENTER);
+
+        // Center the VBox on screen using app dimensions
+        double boxWidth = 500;
+        double boxHeight = 200;
+        gameOverBox.setPrefSize(boxWidth, boxHeight);
+        gameOverBox.setTranslateX((getAppWidth() - boxWidth) / 2.0);
+        gameOverBox.setTranslateY((getAppHeight() - boxHeight) / 2.0);
+
+        addUINode(gameOverBox);
     }
 }

@@ -24,6 +24,9 @@ public class Player {
     private int currentHealth = 100;
     private boolean isPushingBorder = false;
 
+    // Player death tracking flag
+    private boolean isDead = false;
+
     // Invincibility frame (i-frame) parameters
     private boolean isInvincible = false;
     private final double INVINCIBILITY_DURATION = 2.0; // 2 Seconds
@@ -53,10 +56,13 @@ public class Player {
     }
 
     public void attack() {
+        if (isDead) return; // Block attacks when dead
         weaponComponent.swing();
     }
 
     private void tryMove(double dx, double dy) {
+        if (isDead) return; // Block movement when dead
+
         entity.translateX(dx);
         entity.translateY(dy);
 
@@ -73,6 +79,8 @@ public class Player {
     }
 
     public void updateBorderDamage(double tpf) {
+        if (isDead) return;
+
         if (isPushingBorder) {
             borderDamageTimer += tpf;
             if (borderDamageTimer >= DAMAGE_INTERVAL) {
@@ -86,13 +94,15 @@ public class Player {
     }
 
     public void takeDamageWithKnockback(int amount, Point2D direction, double distance) {
-        if (isInvincible) return; // Block damage & knockback during i-frames
+        if (isDead || isInvincible) return; // Block damage & knockback if dead or invincible
 
         takeDamage(amount);
         applyKnockback(direction, distance);
     }
 
     public void applyKnockback(Point2D direction, double distance) {
+        if (isDead) return;
+
         double dx = direction.getX() * distance;
         double dy = direction.getY() * distance;
 
@@ -111,7 +121,7 @@ public class Player {
     }
 
     public void takeDamage(int amount) {
-        if (isInvincible) return; // Block damage during i-frames
+        if (isDead || isInvincible) return; // Block damage if dead or invincible
 
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
@@ -119,7 +129,12 @@ public class Player {
         // Update player texture visual based on health state (Full -> Half -> Dead)
         updateHealthVisual();
 
-        // Trigger Invincibility State
+        if (currentHealth <= 0) {
+            die();
+            return;
+        }
+
+        // Trigger Invincibility State for non-lethal damage
         isInvincible = true;
 
         // Visual Effects: Red Flash + Opacity Blink
@@ -136,13 +151,26 @@ public class Player {
 
         // Expire invincibility and restore opacity after 2.0 seconds
         runOnce(() -> {
-            isInvincible = false;
-            entity.getViewComponent().setOpacity(1.0);
+            if (!isDead) {
+                isInvincible = false;
+                entity.getViewComponent().setOpacity(1.0);
+            }
         }, javafx.util.Duration.seconds(INVINCIBILITY_DURATION));
+    }
 
-        if (currentHealth <= 0) {
-            System.out.println("Player Defeated!");
+    // Handles death state, disables collisions, and displays Game Over screen
+    private void die() {
+        isDead = true;
+
+        // Disable collision component so enemies pass through dead player
+        entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(false));
+
+        // Display Game Over overlay on HUD
+        if (hud != null) {
+            hud.showGameOver();
         }
+
+        System.out.println("Player Defeated!");
     }
 
     // Updates player sprite texture between Full, Half, and Dead states safely
@@ -174,7 +202,6 @@ public class Player {
         }
     }
 
-    // MODIFIED: Replaced Java 16 pattern matching instanceof with pre-Java 16 cast
     private void updateEntityTexture(Texture newTexture) {
         boolean textureUpdated = false;
         for (Node node : entity.getViewComponent().getChildren()) {
@@ -203,4 +230,5 @@ public class Player {
 
     public Entity getEntity() { return entity; }
     public int getCurrentHealth() { return currentHealth; }
+    public boolean isDead() { return isDead; }
 }
