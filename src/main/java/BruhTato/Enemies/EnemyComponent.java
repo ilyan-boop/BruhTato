@@ -17,7 +17,7 @@ public class EnemyComponent extends Component {
 
     private double speed; // Fixed per-tick step matching Player movement
 
-    private int contactDamage = 10;
+    private int contactDamage = 50;
     private double knockbackDistance = 50.0;
 
     // Enemy Health & State tracking (Takes up to 3 hits)
