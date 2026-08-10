@@ -37,6 +37,7 @@ public class Player {
                 .bbox(new HitBox(new Point2D(50, 80), BoundingShape.circle(50)))
                 .with(weaponComponent)
                 .with(new CollidableComponent(true))
+                .with("playerRef", this)
                 .view(texture("Bruhtato_FullHealth.png", 200, 200))
                 .buildAndAttach();
     }
