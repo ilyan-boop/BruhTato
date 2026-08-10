@@ -8,6 +8,7 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.paint.Color;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -37,6 +38,7 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void initGame() {
+        getGameScene().setBackgroundColor(Color.web("#796b86"));
         getPhysicsWorld().setGravity(0, 0);
 
         getGameWorld().addEntityFactory(new GameFactory());
