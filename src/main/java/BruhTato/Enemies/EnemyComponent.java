@@ -9,24 +9,21 @@ import javafx.geometry.Point2D;
 
 public class EnemyComponent extends Component {
 
-    private double speed;
+    private double speed = 3.5; // Fixed per-tick step matching Player movement
 
-    // Contact damage configuration
     private int contactDamage = 10;
-    private double damageInterval = 1.0; // Seconds between damage ticks
-    private double damageTimer = 0.0;
+    private double knockbackDistance = 50.0;
 
     public EnemyComponent(double speed) {
         this.speed = speed;
     }
 
     public EnemyComponent() {
-        this(150.0); // Default speed in pixels per second
+        this(3.5);
     }
 
     @Override
     public void onUpdate(double tpf) {
-        // 1. Locate player and move toward them
         Entity playerEntity = FXGL.getGameWorld()
                 .getSingletonOptional(EntityType.PLAYER)
                 .orElse(null);
@@ -35,40 +32,38 @@ public class EnemyComponent extends Component {
             Point2D playerCenter = playerEntity.getCenter();
             Point2D enemyCenter = entity.getCenter();
 
-            // Calculate direction vector toward player
             Point2D direction = playerCenter.subtract(enemyCenter);
-            if (direction.magnitude() > 0) {
+            if (direction.magnitude() > 1.0) {
                 direction = direction.normalize();
 
-                // Move using step-checking system matching Player class
-                double dx = direction.getX() * speed * tpf;
-                double dy = direction.getY() * speed * tpf;
+                // Fixed step movement (prevents frame delta slowdown)
+                double dx = direction.getX() * speed;
+                double dy = direction.getY() * speed;
                 tryMove(dx, dy);
             }
 
-            // 2. Check for contact with player and deal damage
+            // Contact collision detection
             if (entity.isColliding(playerEntity)) {
-                damageTimer += tpf;
-                if (damageTimer >= damageInterval) {
-                    // Get Player reference from entity or game scene and apply damage
-                    Player player = playerEntity.getObject("playerRef");
-                    if (player != null) {
-                        player.takeDamage(contactDamage);
+                Player player = playerEntity.getObject("playerRef");
+                if (player != null) {
+                    Point2D knockbackDir = playerCenter.subtract(enemyCenter);
+                    if (knockbackDir.magnitude() == 0) {
+                        knockbackDir = new Point2D(1, 0);
+                    } else {
+                        knockbackDir = knockbackDir.normalize();
                     }
-                    damageTimer = 0.0; // Reset timer for next tick
+
+                    // Apply damage & knockback (Player class evaluates 2-second i-frames)
+                    player.takeDamageWithKnockback(contactDamage, knockbackDir, knockbackDistance);
                 }
-            } else {
-                damageTimer = 0.0; // Reset timer if not in contact
             }
         }
     }
 
-    // Step-checking movement system identical to Player logic
     private void tryMove(double dx, double dy) {
         entity.translateX(dx);
         entity.translateY(dy);
 
-        // Revert move if step intersects a border wall
         boolean hitsBorder = FXGL.getGameWorld()
                 .getEntitiesByType(EntityType.BORDER)
                 .stream()
