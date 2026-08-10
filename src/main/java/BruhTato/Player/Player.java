@@ -6,7 +6,9 @@ import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.components.CollidableComponent;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
+import com.almasb.fxgl.texture.Texture;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.effect.ColorAdjust;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -114,6 +116,9 @@ public class Player {
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
 
+        // Update player texture visual based on health state (Full -> Half -> Dead)
+        updateHealthVisual();
+
         // Trigger Invincibility State
         isInvincible = true;
 
@@ -137,6 +142,51 @@ public class Player {
 
         if (currentHealth <= 0) {
             System.out.println("Player Defeated!");
+        }
+    }
+
+    // Updates player sprite texture between Full, Half, and Dead states safely
+    private void updateHealthVisual() {
+        if (currentHealth <= 0) {
+            try {
+                Texture deadTexture = texture("Bruhtato_Dead.png", 200, 200);
+                updateEntityTexture(deadTexture);
+            } catch (Exception e) {
+                // Fallback tint if Bruhtato_Dead.png asset is missing
+                ColorAdjust deadTint = new ColorAdjust();
+                deadTint.setSaturation(-1.0); // Desaturate
+                if (entity.getViewComponent().getParent() != null) {
+                    entity.getViewComponent().getParent().setEffect(deadTint);
+                }
+            }
+        } else if (currentHealth <= maxHealth / 2) {
+            try {
+                Texture halfTexture = texture("Bruhtato_HalfHealth.png", 200, 200);
+                updateEntityTexture(halfTexture);
+            } catch (Exception e) {
+                // Fallback tint if Bruhtato_HalfHealth.png asset is missing
+                ColorAdjust damagedTint = new ColorAdjust();
+                damagedTint.setBrightness(-0.3);
+                if (entity.getViewComponent().getParent() != null) {
+                    entity.getViewComponent().getParent().setEffect(damagedTint);
+                }
+            }
+        }
+    }
+
+    // MODIFIED: Replaced Java 16 pattern matching instanceof with pre-Java 16 cast
+    private void updateEntityTexture(Texture newTexture) {
+        boolean textureUpdated = false;
+        for (Node node : entity.getViewComponent().getChildren()) {
+            if (node instanceof Texture) {
+                Texture t = (Texture) node;
+                t.setImage(newTexture.getImage());
+                textureUpdated = true;
+                break;
+            }
+        }
+        if (!textureUpdated) {
+            entity.getViewComponent().addChild(newTexture);
         }
     }
 
