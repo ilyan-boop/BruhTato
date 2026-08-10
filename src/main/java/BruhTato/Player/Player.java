@@ -7,6 +7,7 @@ import com.almasb.fxgl.entity.components.CollidableComponent;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import javafx.geometry.Point2D;
+import javafx.scene.effect.ColorAdjust;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -14,7 +15,7 @@ public class Player {
 
     private final Entity entity;
     private final WeaponComponent weaponComponent;
-    private static final double SPEED = 7;
+    private static final double SPEED = 3.5;
     private HUD hud;
 
     private final int maxHealth = 100;
@@ -87,6 +88,20 @@ public class Player {
     public void takeDamage(int amount) {
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
+
+        // --- Red Flash Visual Effect ---
+        ColorAdjust redFlash = new ColorAdjust();
+        redFlash.setHue(-0.005);      // Shift hue to red spectrum
+        redFlash.setSaturation(1.0); // Boost color intensity
+
+        // Apply effect to the entity view
+        entity.getViewComponent().getParent().setEffect(redFlash);
+
+        // Remove the flash effect after 0.15 seconds
+        runOnce(() -> {
+            entity.getViewComponent().getParent().setEffect(null);
+        }, javafx.util.Duration.seconds(0.15));
+        // -------------------------------
 
         if (currentHealth <= 0) {
             System.out.println("Player Defeated!");
