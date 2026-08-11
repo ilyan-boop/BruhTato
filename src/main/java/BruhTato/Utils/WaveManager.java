@@ -3,6 +3,7 @@ package BruhTato.Utils;
 import BruhTato.Items.ItemType;
 import BruhTato.Screens.HUD;
 import BruhTato.Utils.EntityType;
+import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import javafx.geometry.Point2D;
 import javafx.util.Duration;
@@ -17,7 +18,8 @@ public class WaveManager {
     private final int maxWaves = 3;
     private boolean waveInProgress = false;
 
-    // Difficulty configuration (Defaults to Easy)
+    // Difficulty tracking (Defaults to Easy)
+    private String difficulty = "easy";
     private int[] waveEnemyCounts = {3, 6, 9};
 
     public WaveManager(HUD hud, Runnable onReturnToMenu) {
@@ -30,7 +32,8 @@ public class WaveManager {
     }
 
     public void setDifficulty(String difficulty) {
-        switch (difficulty.toLowerCase()) {
+        this.difficulty = difficulty.toLowerCase();
+        switch (this.difficulty) {
             case "medium" -> waveEnemyCounts = new int[]{6, 9, 12};
             case "hard" -> waveEnemyCounts = new int[]{9, 12, 15};
             default -> waveEnemyCounts = new int[]{3, 6, 9};
@@ -62,6 +65,11 @@ public class WaveManager {
 
     // Spawns weapons and pickup items inside the playable field for the current wave
     private void spawnWaveItems() {
+        // Wipe leftover uncollected items for Medium and Hard difficulties
+        if (difficulty.equals("medium") || difficulty.equals("hard")) {
+            getGameWorld().getEntitiesByType(EntityType.ITEM).forEach(Entity::removeFromWorld);
+        }
+
         double minX = 300.0;
         double maxX = getAppWidth() - 300.0;
         double minY = 250.0;
@@ -71,13 +79,20 @@ public class WaveManager {
         ItemType[] weapons = {ItemType.SWORD, ItemType.SPEAR, ItemType.AXE};
         ItemType weaponType = weapons[random(0, weapons.length - 1)];
 
+        // Drop 1: Always a weapon
         spawnItemAtRandomLocation(weaponType, minX, maxX, minY, maxY);
 
-        // Spawn consumable items (Health & Shield pickups)
-        spawnItemAtRandomLocation(ItemType.HEALTH, minX, maxX, minY, maxY);
+        if (difficulty.equals("hard")) {
+            // Hard difficulty: Exactly 2 drops total (1 Weapon + 1 Consumable)
+            ItemType consumable = (currentWave >= 2 && random(0, 1) == 1) ? ItemType.SHIELD : ItemType.HEALTH;
+            spawnItemAtRandomLocation(consumable, minX, maxX, minY, maxY);
+        } else {
+            // Easy & Medium difficulty: Standard drop logic
+            spawnItemAtRandomLocation(ItemType.HEALTH, minX, maxX, minY, maxY);
 
-        if (currentWave >= 2) {
-            spawnItemAtRandomLocation(ItemType.SHIELD, minX, maxX, minY, maxY);
+            if (currentWave >= 2) {
+                spawnItemAtRandomLocation(ItemType.SHIELD, minX, maxX, minY, maxY);
+            }
         }
     }
 
