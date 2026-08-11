@@ -5,6 +5,7 @@ import BruhTato.Screens.MainMenu;
 import BruhTato.Utils.BorderFactory;
 import BruhTato.Player.Player;
 import BruhTato.Screens.HUD;
+import BruhTato.Utils.WaveManager;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import javafx.scene.input.KeyCode;
@@ -17,6 +18,7 @@ public class BruhTatoApplication extends GameApplication {
 
     private Player player;
     private HUD hud;
+    private WaveManager waveManager;
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -77,12 +79,19 @@ public class BruhTatoApplication extends GameApplication {
         if (player != null) {
             player.attachHUD(hud);
         }
+
+        waveManager = new WaveManager(hud);
+        waveManager.startWaves();
     }
 
     @Override
     protected void onUpdate(double tpf) {
         if (player != null) {
             player.updateBorderDamage(tpf);
+        }
+
+        if (waveManager != null) {
+            waveManager.onUpdate(tpf);
         }
     }
 }
