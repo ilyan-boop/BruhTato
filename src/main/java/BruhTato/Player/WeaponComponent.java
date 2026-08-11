@@ -1,6 +1,7 @@
 package BruhTato.Player;
 
 import BruhTato.Enemies.MeleeEnemyComponent;
+import BruhTato.Items.WeaponType;
 import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
@@ -9,23 +10,34 @@ import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle; // Replaced Circle with Rectangle
+import javafx.scene.shape.Rectangle;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class WeaponComponent extends Component {
 
-    private final double ATTACK_RANGE = 300.0;   // Reach length of attack rectangle
-    private final double ATTACK_WIDTH = 20.0;    // Narrow width of the attack rectangle
-    private final double ATTACK_DURATION = 0.15; // How long (in seconds) the swing stays visible
-    private final int ATTACK_DAMAGE = 1;         // 1 Hit per swing toward 3 max HP
+    // Default weapon (Fists) baseline parameters
+    private final double DEFAULT_ATTACK_RANGE = 300.0;   // Reach length of attack rectangle
+    private final double DEFAULT_ATTACK_WIDTH = 20.0;    // Narrow width of the attack rectangle
+    private final double DEFAULT_ATTACK_DURATION = 0.15; // How long (in seconds) swing stays visible
+    private final int DEFAULT_ATTACK_DAMAGE = 1;         // 1 Hit per swing
+    private final double DEFAULT_ATTACK_COOLDOWN = 0.1;  // 0.1s cooldown between swings
+
+    // Current weapon state tracking
+    private WeaponType currentWeapon = WeaponType.DEFAULT;
+    private int remainingUses = -1; // -1 indicates infinite uses (default fists)
 
     // Attack Cooldown parameters
     private boolean canAttack = true;
-    private final double ATTACK_COOLDOWN = 0.1;  // 1 second cooldown between swings
 
     private Line aimIndicator;
+    private Player playerRef;
+
+    public void setPlayerRef(Player playerRef) {
+        this.playerRef = playerRef;
+    }
 
     @Override
     public void onAdded() {
@@ -49,9 +61,9 @@ public class WeaponComponent extends Component {
         // 3. Get mouse position in screen/UI space directly
         Point2D mouseUI = getInput().getMousePositionUI();
 
-        // 4. Calculate aim vector
+        // 4. Calculate aim vector using current weapon's range
         Point2D dir = mouseUI.subtract(playerUI).normalize();
-        Point2D lineEnd = playerUI.add(dir.multiply(ATTACK_RANGE));
+        Point2D lineEnd = playerUI.add(dir.multiply(getCurrentAttackRange()));
 
         // 5. Update UI line endpoints
         aimIndicator.setStartX(playerUI.getX());
@@ -60,13 +72,22 @@ public class WeaponComponent extends Component {
         aimIndicator.setEndY(lineEnd.getY());
     }
 
+    // Equips a new weapon and sets durability uses (10 uses for weapons, -1 for default)
+    public void equipWeapon(WeaponType weaponType) {
+        this.currentWeapon = weaponType;
+        this.remainingUses = weaponType.getMaxUses();
+        if (playerRef != null) {
+            playerRef.updateHUDWeaponInfo();
+        }
+    }
+
     public void swing() {
         // Check if the attack is on cooldown
         if (!canAttack) {
             return;
         }
 
-        // Lock attacking state and start cooldown
+        // Lock attacking state
         canAttack = false;
 
         Point2D playerCenter = entity.getCenter();
@@ -76,28 +97,84 @@ public class WeaponComponent extends Component {
         Point2D dir = mouseWorld.subtract(playerCenter).normalize();
         double angle = Math.toDegrees(Math.atan2(dir.getY(), dir.getX()));
 
-        // Create narrow red rectangle visual extending from player along aim angle
-        Rectangle attackVisual = new Rectangle(ATTACK_RANGE, ATTACK_WIDTH, Color.RED);
-        attackVisual.setOpacity(0.7);
+        Entity attackEntity;
+        int damage = getDamageForCurrentWeapon();
+        double cooldown = getCooldownForCurrentWeapon();
 
-        // Calculate top-left spawn coordinate for the rectangle starting at player center
-        double spawnX = playerCenter.getX();
-        double spawnY = playerCenter.getY() - (ATTACK_WIDTH / 2.0);
+        // Branch hitbox creation based on weapon specs
+        switch (currentWeapon) {
+            case SPEAR -> {
+                // Spear: Thin, long rectangle extending forward
+                double spearRange = 400.0;
+                double spearWidth = 15.0;
 
-        // Create attack entity with narrow rectangular HitBox
-        Entity attackEntity = entityBuilder()
-                .at(spawnX, spawnY)
-                .bbox(new HitBox(BoundingShape.box(ATTACK_RANGE, ATTACK_WIDTH)))
-                .view(attackVisual)
-                .with(new CollidableComponent(true))
-                .buildAndAttach();
+                Rectangle spearVisual = new Rectangle(spearRange, spearWidth, Color.LIGHTBLUE);
+                spearVisual.setOpacity(0.7);
 
-        // Fixed transform origin call using FXGL's TransformComponent
-        // Sets rotation pivot to the player's center (start of the rectangle on local Y-axis)
-        attackEntity.getTransformComponent().setRotationOrigin(new Point2D(0, ATTACK_WIDTH / 2.0));
-        attackEntity.setRotation(angle);
+                double spawnX = playerCenter.getX();
+                double spawnY = playerCenter.getY() - (spearWidth / 2.0);
 
-        // Damage enemies inside attack hitbox (no enemy i-frames evaluated here)
+                attackEntity = entityBuilder()
+                        .at(spawnX, spawnY)
+                        .bbox(new HitBox(BoundingShape.box(spearRange, spearWidth)))
+                        .view(spearVisual)
+                        .with(new CollidableComponent(true))
+                        .buildAndAttach();
+
+                attackEntity.getTransformComponent().setRotationOrigin(new Point2D(0, spearWidth / 2.0));
+                attackEntity.setRotation(angle);
+            }
+            case SWORD -> {
+                // Sword: Normal range, average damage, circle hitbox
+                double radius = 60.0;
+                Point2D attackCenter = playerCenter.add(dir.multiply(70.0));
+
+                Circle swordVisual = new Circle(radius, Color.SILVER);
+                swordVisual.setOpacity(0.7);
+
+                attackEntity = entityBuilder()
+                        .at(attackCenter.getX() - radius, attackCenter.getY() - radius)
+                        .bbox(new HitBox(BoundingShape.circle(radius)))
+                        .view(swordVisual)
+                        .with(new CollidableComponent(true))
+                        .buildAndAttach();
+            }
+            case AXE -> {
+                // Axe: Slowest speed, highest damage, wide circle hitbox
+                double radius = 110.0;
+                Point2D attackCenter = playerCenter.add(dir.multiply(80.0));
+
+                Circle axeVisual = new Circle(radius, Color.DARKRED);
+                axeVisual.setOpacity(0.7);
+
+                attackEntity = entityBuilder()
+                        .at(attackCenter.getX() - radius, attackCenter.getY() - radius)
+                        .bbox(new HitBox(BoundingShape.circle(radius)))
+                        .view(axeVisual)
+                        .with(new CollidableComponent(true))
+                        .buildAndAttach();
+            }
+            default -> {
+                // Default Fists: Standard narrow red rectangle extending from player
+                Rectangle attackVisual = new Rectangle(DEFAULT_ATTACK_RANGE, DEFAULT_ATTACK_WIDTH, Color.RED);
+                attackVisual.setOpacity(0.7);
+
+                double spawnX = playerCenter.getX();
+                double spawnY = playerCenter.getY() - (DEFAULT_ATTACK_WIDTH / 2.0);
+
+                attackEntity = entityBuilder()
+                        .at(spawnX, spawnY)
+                        .bbox(new HitBox(BoundingShape.box(DEFAULT_ATTACK_RANGE, DEFAULT_ATTACK_WIDTH)))
+                        .view(attackVisual)
+                        .with(new CollidableComponent(true))
+                        .buildAndAttach();
+
+                attackEntity.getTransformComponent().setRotationOrigin(new Point2D(0, DEFAULT_ATTACK_WIDTH / 2.0));
+                attackEntity.setRotation(angle);
+            }
+        }
+
+        // Damage enemies inside attack hitbox
         getGameWorld()
                 .getEntitiesByType(EntityType.ENEMY)
                 .stream()
@@ -105,15 +182,53 @@ public class WeaponComponent extends Component {
                 .forEach(enemy -> {
                     MeleeEnemyComponent enemyComp = enemy.getComponentOptional(MeleeEnemyComponent.class).orElse(null);
                     if (enemyComp != null && !enemyComp.isDead()) {
-                        enemyComp.takeDamage(ATTACK_DAMAGE); // Deals 1 hit of damage
+                        enemyComp.takeDamage(damage);
                     }
                 });
 
-        // Despawn attack box visual after ATTACK_DURATION seconds
-        runOnce(attackEntity::removeFromWorld, javafx.util.Duration.seconds(ATTACK_DURATION));
+        // Despawn attack box visual after duration
+        runOnce(attackEntity::removeFromWorld, javafx.util.Duration.seconds(DEFAULT_ATTACK_DURATION));
 
-        // Reset attack cooldown
-        runOnce(() -> canAttack = true, javafx.util.Duration.seconds(ATTACK_COOLDOWN));
+        // Consume durability usage if not infinite
+        if (remainingUses > 0) {
+            remainingUses--;
+            if (remainingUses == 0) {
+                // Revert to default weapon when 10 uses expire
+                equipWeapon(WeaponType.DEFAULT);
+            } else if (playerRef != null) {
+                playerRef.updateHUDWeaponInfo();
+            }
+        }
+
+        // Reset attack cooldown based on equipped weapon
+        runOnce(() -> canAttack = true, javafx.util.Duration.seconds(cooldown));
+    }
+
+    private double getCurrentAttackRange() {
+        return switch (currentWeapon) {
+            case SPEAR -> 400.0;
+            case SWORD -> 130.0;
+            case AXE -> 190.0;
+            default -> DEFAULT_ATTACK_RANGE;
+        };
+    }
+
+    private int getDamageForCurrentWeapon() {
+        return switch (currentWeapon) {
+            case SWORD -> 1;
+            case SPEAR -> 1;
+            case AXE -> 3;
+            default -> DEFAULT_ATTACK_DAMAGE;
+        };
+    }
+
+    private double getCooldownForCurrentWeapon() {
+        return switch (currentWeapon) {
+            case SWORD -> 0.35;
+            case SPEAR -> 0.6;
+            case AXE -> 1.0;
+            default -> DEFAULT_ATTACK_COOLDOWN;
+        };
     }
 
     @Override
@@ -121,8 +236,15 @@ public class WeaponComponent extends Component {
         removeUINode(aimIndicator);
     }
 
-    // Getter to check if attack is off cooldown
     public boolean canAttack() {
         return canAttack;
+    }
+
+    public WeaponType getCurrentWeapon() {
+        return currentWeapon;
+    }
+
+    public int getRemainingUses() {
+        return remainingUses;
     }
 }
