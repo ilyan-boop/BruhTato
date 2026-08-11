@@ -1,6 +1,7 @@
 package BruhTato;
 
 import BruhTato.Items.GameFactory;
+import BruhTato.Screens.MainMenu;
 import BruhTato.Utils.BorderFactory;
 import BruhTato.Player.Player;
 import BruhTato.Screens.HUD;
@@ -28,12 +29,13 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void initInput() {
-        onKey(KeyCode.W, () -> player.moveUp());
-        onKey(KeyCode.S, () -> player.moveDown());
-        onKey(KeyCode.A, () -> player.moveLeft());
-        onKey(KeyCode.D, () -> player.moveRight());
+        // MODIFIED: Added null checks so inputs are ignored before the player is spawned
+        onKey(KeyCode.W, () -> { if (player != null) player.moveUp(); });
+        onKey(KeyCode.S, () -> { if (player != null) player.moveDown(); });
+        onKey(KeyCode.A, () -> { if (player != null) player.moveLeft(); });
+        onKey(KeyCode.D, () -> { if (player != null) player.moveRight(); });
 
-        onBtnDown(MouseButton.PRIMARY, () -> player.attack());
+        onBtnDown(MouseButton.PRIMARY, () -> { if (player != null) player.attack(); });
     }
 
     @Override
@@ -43,6 +45,23 @@ public class BruhTatoApplication extends GameApplication {
 
         getGameWorld().addEntityFactory(new GameFactory());
 
+        // MODIFIED: Deferred spawning borders, player, and enemy until after difficulty selection
+    }
+
+    @Override
+    protected void initUI() {
+        // MODIFIED: Show only the Main Menu initially
+        MainMenu menu = new MainMenu(() -> {
+            // Callback executed when any difficulty is selected
+            System.out.println("Starting Game...");
+            startGame();
+        });
+
+        menu.attachToUI();
+    }
+
+    // NEW: Handles initialization of game entities and HUD after difficulty selection
+    private void startGame() {
         BorderFactory.spawnScreenBorders();
 
         player = new Player();
@@ -50,10 +69,7 @@ public class BruhTatoApplication extends GameApplication {
         double centerX = getAppWidth() / 2.0;
         double centerY = getAppHeight() / 2.0;
         spawn("enemy", centerX, centerY);
-    }
 
-    @Override
-    protected void initUI() {
         hud = new HUD();
         hud.attachToGame();
 
