@@ -45,4 +45,40 @@ public class MainMenu {
         menuContainer.getChildren().addAll(titleText, startBtn, exitBtn);
     }
 
+    // Step 2: Difficulty Selection Menu
+    private void showDifficultyMenu(Runnable onStartGame) {
+        menuContainer.getChildren().clear();
+
+        Text difficultyTitle = getUIFactoryService().newText("SELECT DIFFICULTY", Color.WHITE, 36.0);
+
+        Button easyBtn = getUIFactoryService().newButton("EASY");
+        easyBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
+        easyBtn.setOnAction(e -> launchGame(onStartGame));
+
+        Button mediumBtn = getUIFactoryService().newButton("MEDIUM");
+        mediumBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
+        mediumBtn.setOnAction(e -> launchGame(onStartGame));
+
+        Button hardBtn = getUIFactoryService().newButton("HARD");
+        hardBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
+        hardBtn.setOnAction(e -> launchGame(onStartGame));
+
+        Button backBtn = getUIFactoryService().newButton("BACK");
+        backBtn.setStyle("-fx-font-size: 16px; -fx-min-width: 220px;");
+        backBtn.setOnAction(e -> showTitleMenu(onStartGame));
+
+        menuContainer.getChildren().addAll(difficultyTitle, easyBtn, mediumBtn, hardBtn, backBtn);
+    }
+
+    // Removes the UI menu overlay and triggers gameplay initialization
+    private void launchGame(Runnable onStartGame) {
+        removeUINode(menuContainer);
+        if (onStartGame != null) {
+            onStartGame.run();
+        }
+    }
+
+    public void attachToUI() {
+        addUINode(menuContainer);
+    }
 }
