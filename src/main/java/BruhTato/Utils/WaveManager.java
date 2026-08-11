@@ -10,6 +10,8 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class WaveManager {
 
     private final HUD hud;
+    // NEW: Callback reference to return to Main Menu
+    private final Runnable onReturnToMenu;
     private int currentWave = 0;
     private final int maxWaves = 3;
     private boolean waveInProgress = false;
@@ -17,8 +19,15 @@ public class WaveManager {
     // Difficulty configuration (Easy mode defaults)
     private final int[] waveEnemyCounts = {3, 6, 9};
 
-    public WaveManager(HUD hud) {
+    // MODIFIED: Updated constructor to accept onReturnToMenu Runnable
+    public WaveManager(HUD hud, Runnable onReturnToMenu) {
         this.hud = hud;
+        this.onReturnToMenu = onReturnToMenu;
+    }
+
+    // NEW: Convenience constructor for backward compatibility
+    public WaveManager(HUD hud) {
+        this(hud, null);
     }
 
     public void startWaves() {
@@ -87,8 +96,13 @@ public class WaveManager {
         }
     }
 
+    // MODIFIED: Displays victory screen via HUD instead of console output
     private void triggerVictory() {
-        System.out.println("All waves cleared!");
+        if (hud != null) {
+            hud.showVictory(onReturnToMenu);
+        } else {
+            System.out.println("All waves cleared!");
+        }
     }
 
     public int getCurrentWave() {

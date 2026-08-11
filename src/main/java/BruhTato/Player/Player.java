@@ -20,6 +20,9 @@ public class Player {
     private static final double SPEED = 3.5;
     private HUD hud;
 
+    // NEW: Callback reference to return to Main Menu upon defeat
+    private final Runnable onReturnToMenu;
+
     private final int maxHealth = 100;
     private int currentHealth = 100;
     private boolean isPushingBorder = false;
@@ -35,7 +38,9 @@ public class Player {
     private final double DAMAGE_INTERVAL = 1.0;
     private final int BORDER_DAMAGE = 5;
 
-    public Player() {
+    // MODIFIED: Updated constructor to accept onReturnToMenu Runnable
+    public Player(Runnable onReturnToMenu) {
+        this.onReturnToMenu = onReturnToMenu;
         weaponComponent = new WeaponComponent();
 
         entity = entityBuilder()
@@ -48,6 +53,11 @@ public class Player {
                 .with("playerRef", this)
                 .view(texture("Bruhtato_FullHealth.png", 200, 200))
                 .buildAndAttach();
+    }
+
+    // NEW: Convenience constructor for backward compatibility
+    public Player() {
+        this(null);
     }
 
     public void attachHUD(HUD hud) {
@@ -165,6 +175,7 @@ public class Player {
     }
 
     // Handles death state, disables collisions, and displays Game Over screen
+    // MODIFIED: Passes onReturnToMenu callback to showGameOver
     private void die() {
         isDead = true;
 
@@ -173,7 +184,7 @@ public class Player {
 
         // Display Game Over overlay on HUD
         if (hud != null) {
-            hud.showGameOver();
+            hud.showGameOver(onReturnToMenu);
         }
 
         System.out.println("Player Defeated!");
