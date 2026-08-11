@@ -26,7 +26,7 @@ public class BruhTatoApplication extends GameApplication {
         settings.setWidth(1920);
         settings.setHeight(1080);
         settings.setTitle("Bruhtato");
-        settings.setVersion("1.2");
+        settings.setVersion("1.9");
         settings.setDeveloperMenuEnabled(true);
     }
 

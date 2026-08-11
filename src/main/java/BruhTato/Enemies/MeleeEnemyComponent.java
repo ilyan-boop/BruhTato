@@ -14,7 +14,7 @@ import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-public class MeleeEnemyComponent extends Component {
+public class MeleeEnemyComponent extends BaseEnemyComponent {
 
     private double speed; // Fixed per-tick step matching Player movement
 

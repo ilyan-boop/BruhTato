@@ -1,6 +1,6 @@
 package BruhTato.Player;
 
-import BruhTato.Enemies.MeleeEnemyComponent;
+import BruhTato.Enemies.BaseEnemyComponent;
 import BruhTato.Items.WeaponType;
 import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
@@ -174,13 +174,19 @@ public class WeaponComponent extends Component {
             }
         }
 
-        // Damage enemies inside attack hitbox
+        // Damage any base enemy inside attack hitbox
         getGameWorld()
                 .getEntitiesByType(EntityType.ENEMY)
                 .stream()
                 .filter(enemy -> attackEntity.isColliding(enemy))
                 .forEach(enemy -> {
-                    MeleeEnemyComponent enemyComp = enemy.getComponentOptional(MeleeEnemyComponent.class).orElse(null);
+                    // Search entity components for anything extending BaseEnemyComponent
+                    BaseEnemyComponent enemyComp = enemy.getComponents().stream()
+                            .filter(BaseEnemyComponent.class::isInstance)
+                            .map(BaseEnemyComponent.class::cast)
+                            .findFirst()
+                            .orElse(null);
+
                     if (enemyComp != null && !enemyComp.isDead()) {
                         enemyComp.takeDamage(damage);
                     }

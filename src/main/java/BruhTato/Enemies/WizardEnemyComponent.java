@@ -16,7 +16,7 @@ import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-public class WizardEnemyComponent extends Component {
+public class WizardEnemyComponent extends BaseEnemyComponent{
 
     private int spellDamage = 20;
     private double spellRadius = 100.0;
