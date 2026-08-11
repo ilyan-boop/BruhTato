@@ -14,10 +14,11 @@ public class HUD {
     private final Text healthText;
     private final Text waveText;
     private final Text scoreText;
+    private final Text weaponText;
     private final VBox container;
 
     public HUD() {
-        // NEW: Ensure global score property is initialized in FXGL
+        // Ensure global score property is initialized in FXGL
         if (!getWorldProperties().exists("score")) {
             set("score", 0);
         }
@@ -25,12 +26,13 @@ public class HUD {
         healthText = getUIFactoryService().newText("HP: 100 / 100", Color.RED, 40.0);
         waveText = getUIFactoryService().newText("WAVE: 1", Color.GOLD, 30.0);
         scoreText = getUIFactoryService().newText("Score: 0", Color.GOLD, 30.0);
+        weaponText = getUIFactoryService().newText("Weapon: Default (∞)", Color.LIGHTBLUE, 30.0);
 
-        // NEW: Listen for changes to global score property and update scoreText display
+        // Listen for changes to global score property and update scoreText display
         getip("score").addListener((obs, oldVal, newVal) -> updateScore(newVal.intValue()));
 
         // Pass initialized FXGL nodes into VBox
-        container = new VBox(8, healthText, waveText, scoreText);
+        container = new VBox(8, healthText, waveText, scoreText, weaponText);
         container.setPadding(new Insets(15));
 
         container.setTranslateX(10);
@@ -41,7 +43,7 @@ public class HUD {
         addUINode(container);
     }
 
-    // NEW: Removes HUD overlay container from UI
+    // Removes HUD overlay container from UI
     public void detachFromGame() {
         removeUINode(container);
     }
@@ -58,26 +60,35 @@ public class HUD {
         }
     }
 
-    // NEW: Updates score UI display
+    // Updates score UI display
     public void updateScore(int score) {
         if (scoreText != null) {
             scoreText.setText("Score: " + score);
         }
     }
 
-    // MODIFIED: Added Main Menu return button and callback handling
+    // Updates current weapon name and remaining uses counter on HUD
+    public void updateWeapon(String weaponName, int remainingUses, int maxUses) {
+        if (weaponText != null) {
+            if (remainingUses < 0) {
+                weaponText.setText("Weapon: " + weaponName + " (∞)");
+            } else {
+                weaponText.setText("Weapon: " + weaponName + " (" + remainingUses + "/" + maxUses + ")");
+            }
+        }
+    }
+
+    // Displays Game Over screen with Main Menu return button
     public void showGameOver(Runnable onReturnToMenu) {
         Text gameOverTitle = getUIFactoryService().newText("GAME OVER", Color.RED, 80.0);
         Text gameOverSubtext = getUIFactoryService().newText("You Were Defeated", Color.WHITE, 30.0);
 
-        // NEW: Button to return player to the main menu
         Button mainMenuBtn = getUIFactoryService().newButton("MAIN MENU");
         mainMenuBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
 
         VBox gameOverBox = new VBox(15, gameOverTitle, gameOverSubtext, mainMenuBtn);
         gameOverBox.setAlignment(Pos.CENTER);
 
-        // NEW: Action handler for Main Menu button
         mainMenuBtn.setOnAction(e -> {
             removeUINode(gameOverBox);
             detachFromGame();
@@ -86,7 +97,6 @@ public class HUD {
             }
         });
 
-        // Center the VBox on screen using app dimensions
         double boxWidth = 500;
         double boxHeight = 250;
         gameOverBox.setPrefSize(boxWidth, boxHeight);
@@ -96,7 +106,7 @@ public class HUD {
         addUINode(gameOverBox);
     }
 
-    // NEW: Displays centered Victory screen with final score and Main Menu button
+    // Displays centered Victory screen with final score and Main Menu button
     public void showVictory(Runnable onReturnToMenu) {
         Text victoryTitle = getUIFactoryService().newText("VICTORY!", Color.GOLD, 80.0);
         Text victorySubtext = getUIFactoryService().newText("All Waves Cleared", Color.WHITE, 30.0);
