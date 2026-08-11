@@ -1,6 +1,7 @@
 package BruhTato.Utils;
 
 import BruhTato.Enemies.MeleeEnemyComponent;
+import BruhTato.Enemies.WizardEnemyComponent;
 import BruhTato.Items.ItemComponent;
 import BruhTato.Items.ItemType;
 import com.almasb.fxgl.entity.Entity;
@@ -20,14 +21,24 @@ public class GameFactory implements EntityFactory {
 
     @Spawns("enemy")
     public Entity newEnemy(SpawnData data) {
-        double radius = 50.0; // Radius matching enemy body size
 
         return entityBuilder(data)
                 .type(EntityType.ENEMY)
-                .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(radius)))
+                .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(50.0)))
                 .view(texture("Melee_Enemy_FullHealth.png", 150, 150))
                 .with(new CollidableComponent(true))
                 .with(new MeleeEnemyComponent(1.5)) // Fixed speed matching player steps
+                .build();
+    }
+
+    @Spawns("wizardEnemy")
+    public Entity newWizardEnemy(SpawnData data) {
+        return entityBuilder(data)
+                .type(EntityType.ENEMY)
+                .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(70.0)))
+                .view(texture("Wizard_Enemy_FullHealth.png", 200, 200))
+                .with(new WizardEnemyComponent())
+                .with(new CollidableComponent(true))
                 .build();
     }
 

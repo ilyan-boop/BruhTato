@@ -113,7 +113,17 @@ public class WaveManager {
         double minY = margin;
         double maxY = getAppHeight() - margin - enemyHeight;
 
-        for (int i = 0; i < count; i++) {
+        int meleeCount = count;
+
+        // Spawn 1 Wizard Enemy for Medium difficulty
+        if (difficulty.equals("medium")) {
+            Point2D wizardSpawnPos = getRandomBorderPosition(minX, maxX, minY, maxY);
+            spawn("wizardEnemy", wizardSpawnPos.getX(), wizardSpawnPos.getY());
+            meleeCount = Math.max(1, count - 1); // Adjust melee count so total numbers match
+        }
+
+        // Spawn regular Melee enemies
+        for (int i = 0; i < meleeCount; i++) {
             Point2D spawnPos = getRandomBorderPosition(minX, maxX, minY, maxY);
             spawn("enemy", spawnPos.getX(), spawnPos.getY());
         }
