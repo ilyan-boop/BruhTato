@@ -126,6 +126,12 @@ public class Player {
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
 
+        // MODIFIED: Deduct score when taking damage (ensuring score doesn't drop below 0)
+        if (getWorldProperties().exists("score")) {
+            int currentScore = geti("score");
+            set("score", Math.max(0, currentScore - amount));
+        }
+
         // Update player texture visual based on health state (Full -> Half -> Dead)
         updateHealthVisual();
 
