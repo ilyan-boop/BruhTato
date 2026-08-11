@@ -17,7 +17,7 @@ public class MeleeEnemyComponent extends Component {
 
     private double speed; // Fixed per-tick step matching Player movement
 
-    private int contactDamage = 50;
+    private int contactDamage = 10;
     private double knockbackDistance = 50.0;
 
     // Enemy Health & State tracking (Takes up to 3 hits)
@@ -25,7 +25,7 @@ public class MeleeEnemyComponent extends Component {
     private int currentHealth = 3;
     private boolean isDead = false;
 
-    // Despawn/Respawn fade timer configuration
+    // Despawn fade timer configuration
     private double fadeTimer = 0.0;
     private final double FADE_DURATION = 1.0; // Seconds to fade out after dying
 
@@ -48,9 +48,9 @@ public class MeleeEnemyComponent extends Component {
             double newOpacity = Math.max(0.0, currentOpacity - (tpf / FADE_DURATION));
             entity.getViewComponent().setOpacity(newOpacity);
 
-            // Trigger respawn once fully faded out
+            // MODIFIED: Permanently remove entity from world once fully faded out
             if (fadeTimer >= FADE_DURATION || newOpacity <= 0) {
-                respawn();
+                entity.removeFromWorld();
             }
             return; // Stop processing movement/attacks while dying
         }
@@ -106,42 +106,7 @@ public class MeleeEnemyComponent extends Component {
         }
     }
 
-    // NEW: Resets enemy state and teleports to a random location on screen
-    private void respawn() {
-        isDead = false;
-        fadeTimer = 0.0;
-        currentHealth = maxHealth;
-
-        // Re-enable collision component so the player and attacks hit the enemy again
-        entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(true));
-
-        // Restore full opacity and clear any tint effects
-        entity.getViewComponent().setOpacity(1.0);
-        if (entity.getViewComponent().getParent() != null) {
-            entity.getViewComponent().getParent().setEffect(null);
-        }
-
-        // Restore default full-health texture
-        try {
-            Texture fullTexture = texture("Melee_Enemy_FullHealth.png", 150, 150);
-            updateEntityTexture(fullTexture);
-        } catch (Exception e) {
-            // Fallback: If Melee_Enemy.png asset name differs, effect clearing above restores baseline visual
-        }
-
-        // Generate random coordinates within viewport bounds
-        double margin = 100.0;
-        double minX = margin;
-        double maxX = Math.max(margin, getAppWidth() - margin - 150);
-        double minY = margin;
-        double maxY = Math.max(margin, getAppHeight() - margin - 150);
-
-        double randomX = random(minX, maxX);
-        double randomY = random(minY, maxY);
-
-        // Reposition enemy entity
-        entity.setPosition(randomX, randomY);
-    }
+    // MODIFIED: Removed respawn() method. Respawning logic is fully managed by WaveManager at wave start.
 
     // Updates visual texture to half health state
     private void updateToHalfHealthVisual() {
@@ -161,7 +126,7 @@ public class MeleeEnemyComponent extends Component {
     private void die() {
         isDead = true;
 
-        // NEW: Award 100 points to score on enemy defeat
+        // Award 100 points to score on enemy defeat
         if (getWorldProperties().exists("score")) {
             inc("score", 100);
         } else {

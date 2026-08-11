@@ -2,22 +2,25 @@ package BruhTato.Utils;
 
 import BruhTato.Screens.HUD;
 import BruhTato.Utils.EntityType;
+import javafx.geometry.Point2D;
 import javafx.util.Duration;
+
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-
 public class WaveManager {
+
     private final HUD hud;
     private int currentWave = 0;
     private final int maxWaves = 3;
     private boolean waveInProgress = false;
 
     // Difficulty configuration (Easy mode defaults)
-    private final int[] waveEnemyCounts = {3, 6, 9}; // Wave 1: 3, Wave 2: 6, Wave 3: 9
+    private final int[] waveEnemyCounts = {3, 6, 9};
 
     public WaveManager(HUD hud) {
         this.hud = hud;
     }
+
     public void startWaves() {
         currentWave = 0;
         nextWave();
@@ -40,24 +43,39 @@ public class WaveManager {
         spawnWaveEnemies(countToSpawn);
     }
 
+    // MODIFIED: Spawns enemies only along the inner screen borders
     private void spawnWaveEnemies(int count) {
-        double margin = 150.0;
+        double enemyWidth = 150.0;
+        double enemyHeight = 150.0;
+        double margin = 110.0; // Margin offset near border
+
         double minX = margin;
-        double maxX = Math.max(margin, getAppWidth() - margin - 150);
+        double maxX = getAppWidth() - margin - enemyWidth;
         double minY = margin;
-        double maxY = Math.max(margin, getAppHeight() - margin - 150);
+        double maxY = getAppHeight() - margin - enemyHeight;
 
         for (int i = 0; i < count; i++) {
-            double randomX = random(minX, maxX);
-            double randomY = random(minY, maxY);
-            spawn("enemy", randomX, randomY);
+            Point2D spawnPos = getRandomBorderPosition(minX, maxX, minY, maxY);
+            spawn("enemy", spawnPos.getX(), spawnPos.getY());
         }
+    }
+
+    // NEW: Calculates random coordinates along top, bottom, left, or right border edges
+    private Point2D getRandomBorderPosition(double minX, double maxX, double minY, double maxY) {
+        int side = random(0, 3); // 0: Top, 1: Bottom, 2: Left, 3: Right
+
+        return switch (side) {
+            case 0 -> new Point2D(random(minX, maxX), minY);              // Top Border
+            case 1 -> new Point2D(random(minX, maxX), maxY);              // Bottom Border
+            case 2 -> new Point2D(minX, random(minY, maxY));              // Left Border
+            default -> new Point2D(maxX, random(minY, maxY));             // Right Border
+        };
     }
 
     public void onUpdate(double tpf) {
         if (!waveInProgress) return;
 
-        // Check if all enemies in the current wave are defeated
+        // Check if all active enemies are defeated
         long activeEnemies = getGameWorld().getEntitiesByType(EntityType.ENEMY).stream()
                 .filter(e -> e.isActive())
                 .count();
@@ -71,7 +89,6 @@ public class WaveManager {
 
     private void triggerVictory() {
         System.out.println("All waves cleared!");
-        // Optional: Trigger a Victory screen or HUD message here
     }
 
     public int getCurrentWave() {
