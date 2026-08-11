@@ -67,9 +67,17 @@ public class MeleeEnemyComponent extends Component {
             if (direction.magnitude() > 1.0) {
                 direction = direction.normalize();
 
+                // NEW: Calculate separation force away from nearby active enemies to prevent merging
+                Point2D separation = computeSeparation();
+                Point2D moveVector = direction.add(separation);
+
+                if (moveVector.magnitude() > 0) {
+                    moveVector = moveVector.normalize();
+                }
+
                 // Fixed step movement (prevents frame delta slowdown)
-                double dx = direction.getX() * speed;
-                double dy = direction.getY() * speed;
+                double dx = moveVector.getX() * speed;
+                double dy = moveVector.getY() * speed;
                 tryMove(dx, dy);
             }
 
@@ -89,6 +97,35 @@ public class MeleeEnemyComponent extends Component {
                 }
             }
         }
+    }
+
+    // NEW: Calculates a push vector away from neighboring living enemies to avoid stacking
+    private Point2D computeSeparation() {
+        Point2D separation = new Point2D(0, 0);
+        double minDistance = 110.0; // Distance threshold to trigger body bumping/separation
+
+        for (Entity other : FXGL.getGameWorld().getEntitiesByType(EntityType.ENEMY)) {
+            if (other == entity) continue;
+
+            // Ignore dead/fading enemies
+            MeleeEnemyComponent otherComp = other.getComponentOptional(MeleeEnemyComponent.class).orElse(null);
+            if (otherComp != null && otherComp.isDead()) continue;
+
+            double dist = entity.getCenter().distance(other.getCenter());
+            if (dist < minDistance) {
+                Point2D pushDir;
+                if (dist > 0.001) {
+                    pushDir = entity.getCenter().subtract(other.getCenter()).normalize();
+                } else {
+                    // Pick a random direction to split enemies spawned on the exact same coordinate
+                    pushDir = new Point2D(random(-1.0, 1.0), random(-1.0, 1.0)).normalize();
+                }
+                // Push force increases as enemies get closer to each other
+                double force = (minDistance - dist) / minDistance;
+                separation = separation.add(pushDir.multiply(force * 1.5));
+            }
+        }
+        return separation;
     }
 
     // Method called when the player attacks this enemy (Enemy has NO i-frames; damage applies immediately)

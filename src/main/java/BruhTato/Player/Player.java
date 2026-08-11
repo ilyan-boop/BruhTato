@@ -45,7 +45,7 @@ public class Player {
 
         entity = entityBuilder()
                 .type(EntityType.PLAYER)
-                .at(100, 100)
+                .at(960, 540)
                 .bbox(new HitBox(new Point2D(50, 25), BoundingShape.circle(50)))
                 .bbox(new HitBox(new Point2D(50, 80), BoundingShape.circle(50)))
                 .with(weaponComponent)
