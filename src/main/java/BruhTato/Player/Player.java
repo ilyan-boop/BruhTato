@@ -163,7 +163,7 @@ public class Player {
         isShielded = true;
 
         ColorAdjust shieldTint = new ColorAdjust();
-        shieldTint.setHue(0.6);
+        shieldTint.setHue(-0.5);
         if (entity.getViewComponent().getParent() != null) {
             entity.getViewComponent().getParent().setEffect(shieldTint);
         }
@@ -239,7 +239,7 @@ public class Player {
         isInvincible = true;
 
         ColorAdjust redFlash = new ColorAdjust();
-        redFlash.setHue(-0.005);
+        redFlash.setHue(-0.08);
         redFlash.setSaturation(1.0);
         if (entity.getViewComponent().getParent() != null) {
             entity.getViewComponent().getParent().setEffect(redFlash);

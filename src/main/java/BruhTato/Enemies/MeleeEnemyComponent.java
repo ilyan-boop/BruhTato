@@ -10,6 +10,7 @@ import com.almasb.fxgl.texture.Texture;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.effect.ColorAdjust;
+import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -48,7 +49,7 @@ public class MeleeEnemyComponent extends Component {
             double newOpacity = Math.max(0.0, currentOpacity - (tpf / FADE_DURATION));
             entity.getViewComponent().setOpacity(newOpacity);
 
-            // MODIFIED: Permanently remove entity from world once fully faded out
+            // Permanently remove entity from world once fully faded out
             if (fadeTimer >= FADE_DURATION || newOpacity <= 0) {
                 entity.removeFromWorld();
             }
@@ -67,7 +68,7 @@ public class MeleeEnemyComponent extends Component {
             if (direction.magnitude() > 1.0) {
                 direction = direction.normalize();
 
-                // NEW: Calculate separation force away from nearby active enemies to prevent merging
+                // Calculate separation force away from nearby active enemies to prevent merging
                 Point2D separation = computeSeparation();
                 Point2D moveVector = direction.add(separation);
 
@@ -99,7 +100,7 @@ public class MeleeEnemyComponent extends Component {
         }
     }
 
-    // NEW: Calculates a push vector away from neighboring living enemies to avoid stacking
+    // Calculates a push vector away from neighboring living enemies to avoid stacking
     private Point2D computeSeparation() {
         Point2D separation = new Point2D(0, 0);
         double minDistance = 110.0; // Distance threshold to trigger body bumping/separation
@@ -134,6 +135,9 @@ public class MeleeEnemyComponent extends Component {
 
         currentHealth -= damage;
 
+        // Trigger visual red damage flash
+        triggerRedFlash();
+
         if (currentHealth == 2 || currentHealth == 1) {
             // Switch to Half Health state visual
             updateToHalfHealthVisual();
@@ -143,7 +147,25 @@ public class MeleeEnemyComponent extends Component {
         }
     }
 
-    // MODIFIED: Removed respawn() method. Respawning logic is fully managed by WaveManager at wave start.
+    // Displays a temporary red flash filter on the enemy sprite upon taking damage
+    private void triggerRedFlash() {
+        if (entity == null || entity.getViewComponent() == null) return;
+
+        ColorAdjust redFlash = new ColorAdjust();
+        redFlash.setHue(-0.005);
+        redFlash.setSaturation(1.0);
+
+        if (entity.getViewComponent().getParent() != null) {
+            entity.getViewComponent().getParent().setEffect(redFlash);
+        }
+
+        // Restore default appearance after 0.15s
+        runOnce(() -> {
+            if (!isDead && entity.getViewComponent().getParent() != null) {
+                entity.getViewComponent().getParent().setEffect(null);
+            }
+        }, Duration.seconds(0.15));
+    }
 
     // Updates visual texture to half health state
     private void updateToHalfHealthVisual() {
