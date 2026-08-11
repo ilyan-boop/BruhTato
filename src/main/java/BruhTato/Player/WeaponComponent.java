@@ -19,11 +19,11 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class WeaponComponent extends Component {
 
     // Default weapon (Fists) baseline parameters
-    private final double DEFAULT_ATTACK_RANGE = 300.0;   // Reach length of attack rectangle
+    private final double DEFAULT_ATTACK_RANGE = 200.0;   // Reach length of attack rectangle
     private final double DEFAULT_ATTACK_WIDTH = 20.0;    // Narrow width of the attack rectangle
     private final double DEFAULT_ATTACK_DURATION = 0.15; // How long (in seconds) swing stays visible
     private final int DEFAULT_ATTACK_DAMAGE = 1;         // 1 Hit per swing
-    private final double DEFAULT_ATTACK_COOLDOWN = 0.1;  // 0.1s cooldown between swings
+    private final double DEFAULT_ATTACK_COOLDOWN = 0.4;  // Cooldown between swings
 
     // Current weapon state tracking
     private WeaponType currentWeapon = WeaponType.DEFAULT;
@@ -108,7 +108,7 @@ public class WeaponComponent extends Component {
                 double spearRange = 400.0;
                 double spearWidth = 15.0;
 
-                Rectangle spearVisual = new Rectangle(spearRange, spearWidth, Color.LIGHTBLUE);
+                Rectangle spearVisual = new Rectangle(spearRange, spearWidth, Color.RED);
                 spearVisual.setOpacity(0.7);
 
                 double spawnX = playerCenter.getX();
@@ -125,11 +125,12 @@ public class WeaponComponent extends Component {
                 attackEntity.setRotation(angle);
             }
             case SWORD -> {
-                // Sword: Normal range, average damage, circle hitbox
-                double radius = 60.0;
-                Point2D attackCenter = playerCenter.add(dir.multiply(70.0));
+                // Sword: Circle centered exactly at the tip of the aiming line
+                double radius = 80.0;
+                Point2D attackCenter = playerCenter.add(dir.multiply(getCurrentAttackRange()));
 
-                Circle swordVisual = new Circle(radius, Color.SILVER);
+                // Set centerX and centerY to radius so JavaFX renders from top-left (0,0) to (2*radius, 2*radius)
+                Circle swordVisual = new Circle(radius, radius, radius, Color.RED);
                 swordVisual.setOpacity(0.7);
 
                 attackEntity = entityBuilder()
@@ -140,15 +141,14 @@ public class WeaponComponent extends Component {
                         .buildAndAttach();
             }
             case AXE -> {
-                // Axe: Slowest speed, highest damage, wide circle hitbox
-                double radius = 110.0;
-                Point2D attackCenter = playerCenter.add(dir.multiply(80.0));
+                // Axe: Circle centered directly on the player's center position
+                double radius = 200;
 
-                Circle axeVisual = new Circle(radius, Color.DARKRED);
+                Circle axeVisual = new Circle(radius, radius, radius, Color.RED);
                 axeVisual.setOpacity(0.7);
 
                 attackEntity = entityBuilder()
-                        .at(attackCenter.getX() - radius, attackCenter.getY() - radius)
+                        .at(playerCenter.getX() - radius, playerCenter.getY() - radius)
                         .bbox(new HitBox(BoundingShape.circle(radius)))
                         .view(axeVisual)
                         .with(new CollidableComponent(true))
@@ -207,8 +207,8 @@ public class WeaponComponent extends Component {
     private double getCurrentAttackRange() {
         return switch (currentWeapon) {
             case SPEAR -> 400.0;
-            case SWORD -> 130.0;
-            case AXE -> 190.0;
+            case SWORD -> 150.0;
+            case AXE -> 300.0;
             default -> DEFAULT_ATTACK_RANGE;
         };
     }
