@@ -37,6 +37,9 @@ public class BruhTatoApplication extends GameApplication {
         onKey(KeyCode.A, () -> { if (player != null) player.moveLeft(); });
         onKey(KeyCode.D, () -> { if (player != null) player.moveRight(); });
 
+        // Key binding for manual item pickup
+        onKeyDown(KeyCode.E, () -> { if (player != null) player.interact(); });
+
         onBtnDown(MouseButton.PRIMARY, () -> { if (player != null) player.attack(); });
     }
 

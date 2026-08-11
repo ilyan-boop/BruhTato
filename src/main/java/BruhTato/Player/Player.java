@@ -24,24 +24,20 @@ public class Player {
     private static final double SPEED = 3.5;
     private HUD hud;
 
-    // Callback reference to return to Main Menu upon defeat
     private final Runnable onReturnToMenu;
 
     private final int maxHealth = 100;
     private int currentHealth = 100;
     private boolean isPushingBorder = false;
 
-    // Player death tracking flag
     private boolean isDead = false;
 
-    // Invincibility frame (i-frame) parameters
     private boolean isInvincible = false;
-    private final double INVINCIBILITY_DURATION = 2.0; // 2 Seconds
+    private final double INVINCIBILITY_DURATION = 2.0;
 
-    // Shield powerup parameters (scalable by difficulty)
     private boolean isShielded = false;
-    private int healthRestoreAmount = 25; // Default normal heal amount
-    private double shieldDuration = 5.0;   // Default normal shield duration in seconds
+    private int healthRestoreAmount = 25;
+    private double shieldDuration = 5.0;
 
     private double borderDamageTimer = 0.0;
     private final double DAMAGE_INTERVAL = 1.0;
@@ -68,7 +64,6 @@ public class Player {
         this(null);
     }
 
-    // Adjusts item pickup potency according to difficulty setting
     public void setDifficulty(String difficulty) {
         switch (difficulty.toLowerCase()) {
             case "easy" -> {
@@ -79,7 +74,7 @@ public class Player {
                 healthRestoreAmount = 15;
                 shieldDuration = 3.0;
             }
-            default -> { // Normal
+            default -> {
                 healthRestoreAmount = 25;
                 shieldDuration = 5.0;
             }
@@ -92,7 +87,6 @@ public class Player {
         updateHUDWeaponInfo();
     }
 
-    // Updates weapon status display on the HUD and syncs sprite texture
     public void updateHUDWeaponInfo() {
         if (weaponComponent != null) {
             WeaponType weapon = weaponComponent.getCurrentWeapon();
@@ -104,12 +98,28 @@ public class Player {
     }
 
     public void attack() {
-        if (isDead) return; // Block attacks when dead
+        if (isDead) return;
         weaponComponent.swing();
     }
 
+    // Called when pressing the interact key ('E') to pick up nearby items
+    public void interact() {
+        if (isDead) return;
+
+        getGameWorld().getEntitiesByType(EntityType.ITEM).stream()
+                .filter(entity::isColliding)
+                .findFirst()
+                .ifPresent(itemEntity -> {
+                    ItemComponent itemComp = itemEntity.getComponentOptional(ItemComponent.class).orElse(null);
+                    if (itemComp != null) {
+                        applyItemEffect(itemComp.getItemType());
+                        itemEntity.removeFromWorld();
+                    }
+                });
+    }
+
     private void tryMove(double dx, double dy) {
-        if (isDead) return; // Block movement when dead
+        if (isDead) return;
 
         entity.translateX(dx);
         entity.translateY(dy);
@@ -124,25 +134,8 @@ public class Player {
             entity.translateX(-dx);
             entity.translateY(-dy);
         }
-
-        // Check for item collisions on player movement
-        checkItemCollisions();
     }
 
-    // Checks collision with spawned item entities
-    private void checkItemCollisions() {
-        getGameWorld().getEntitiesByType(EntityType.ITEM).stream()
-                .filter(entity::isColliding)
-                .forEach(itemEntity -> {
-                    ItemComponent itemComp = itemEntity.getComponentOptional(ItemComponent.class).orElse(null);
-                    if (itemComp != null) {
-                        applyItemEffect(itemComp.getItemType());
-                        itemEntity.removeFromWorld(); // Despawn collected item
-                    }
-                });
-    }
-
-    // Applies state modification based on item type
     private void applyItemEffect(ItemType type) {
         switch (type) {
             case HEALTH -> {
@@ -166,12 +159,11 @@ public class Player {
         }
     }
 
-    // Grants temporary invulnerability with a visual aura effect
     private void grantShieldInvulnerability(double duration) {
         isShielded = true;
 
         ColorAdjust shieldTint = new ColorAdjust();
-        shieldTint.setHue(0.6); // Cyan/Blue aura
+        shieldTint.setHue(0.6);
         if (entity.getViewComponent().getParent() != null) {
             entity.getViewComponent().getParent().setEffect(shieldTint);
         }
@@ -200,7 +192,7 @@ public class Player {
     }
 
     public void takeDamageWithKnockback(int amount, Point2D direction, double distance) {
-        if (isDead || isInvincible || isShielded) return; // Block damage & knockback if dead, invincible, or shielded
+        if (isDead || isInvincible || isShielded) return;
 
         takeDamage(amount);
         applyKnockback(direction, distance);
@@ -227,18 +219,16 @@ public class Player {
     }
 
     public void takeDamage(int amount) {
-        if (isDead || isInvincible || isShielded) return; // Block damage if dead, invincible, or shielded
+        if (isDead || isInvincible || isShielded) return;
 
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
 
-        // Deduct score when taking damage (ensuring score doesn't drop below 0)
         if (getWorldProperties().exists("score")) {
             int currentScore = geti("score");
             set("score", Math.max(0, currentScore - amount));
         }
 
-        // Update player texture visual based on health and weapon state
         updateHealthVisual();
 
         if (currentHealth <= 0) {
@@ -246,10 +236,8 @@ public class Player {
             return;
         }
 
-        // Trigger Invincibility State for non-lethal damage
         isInvincible = true;
 
-        // Visual Effects: Red Flash + Opacity Blink
         ColorAdjust redFlash = new ColorAdjust();
         redFlash.setHue(-0.005);
         redFlash.setSaturation(1.0);
@@ -258,14 +246,12 @@ public class Player {
         }
         entity.getViewComponent().setOpacity(0.5);
 
-        // Remove red tint flash after 0.15s
         runOnce(() -> {
             if (!isShielded && entity.getViewComponent().getParent() != null) {
                 entity.getViewComponent().getParent().setEffect(null);
             }
         }, Duration.seconds(0.15));
 
-        // Expire invincibility and restore opacity after 2.0 seconds
         runOnce(() -> {
             if (!isDead) {
                 isInvincible = false;
@@ -274,14 +260,11 @@ public class Player {
         }, Duration.seconds(INVINCIBILITY_DURATION));
     }
 
-    // Handles death state, disables collisions, and displays Game Over screen
     private void die() {
         isDead = true;
 
-        // Disable collision component so enemies pass through dead player
         entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(false));
 
-        // Display Game Over overlay on HUD
         if (hud != null) {
             hud.showGameOver(onReturnToMenu);
         }
@@ -289,7 +272,6 @@ public class Player {
         System.out.println("Player Defeated!");
     }
 
-    // Dynamically updates player sprite based on health status (Full/Half/Dead) and equipped weapon
     private void updateHealthVisual() {
         if (currentHealth <= 0) {
             try {
