@@ -1,5 +1,5 @@
 package BruhTato.Utils;
 
 public enum EntityType {
-    PLAYER, ENEMY, OBSTACLE, BORDER
+    PLAYER, ENEMY, OBSTACLE, BORDER, ITEM, WEAPON_ATTACK
 }
