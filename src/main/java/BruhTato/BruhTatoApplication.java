@@ -90,6 +90,7 @@ public class BruhTatoApplication extends GameApplication {
         }
 
         waveManager = new WaveManager(hud, this::returnToMainMenu);
+        waveManager.setDifficulty(difficulty); // Pass difficulty to WaveManager
         waveManager.startWaves();
     }
 

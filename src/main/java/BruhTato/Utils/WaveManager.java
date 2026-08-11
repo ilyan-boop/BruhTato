@@ -18,8 +18,8 @@ public class WaveManager {
     private final int maxWaves = 3;
     private boolean waveInProgress = false;
 
-    // Difficulty configuration (Easy mode defaults)
-    private final int[] waveEnemyCounts = {3, 6, 9};
+    // Difficulty configuration (Defaults to Easy)
+    private int[] waveEnemyCounts = {3, 6, 9};
 
     public WaveManager(HUD hud, Runnable onReturnToMenu) {
         this.hud = hud;
@@ -28,6 +28,15 @@ public class WaveManager {
 
     public WaveManager(HUD hud) {
         this(hud, null);
+    }
+
+    // Configures wave enemy counts based on selected difficulty
+    public void setDifficulty(String difficulty) {
+        switch (difficulty.toLowerCase()) {
+            case "medium" -> waveEnemyCounts = new int[]{6, 9, 12};
+            case "hard" -> waveEnemyCounts = new int[]{9, 12, 15};
+            default -> waveEnemyCounts = new int[]{3, 6, 9}; // Easy
+        }
     }
 
     public void startWaves() {
