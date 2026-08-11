@@ -1,6 +1,6 @@
 package BruhTato.Player;
 
-import BruhTato.Enemies.EnemyComponent;
+import BruhTato.Enemies.MeleeEnemyComponent;
 import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
@@ -103,7 +103,7 @@ public class WeaponComponent extends Component {
                 .stream()
                 .filter(enemy -> attackEntity.isColliding(enemy))
                 .forEach(enemy -> {
-                    EnemyComponent enemyComp = enemy.getComponentOptional(EnemyComponent.class).orElse(null);
+                    MeleeEnemyComponent enemyComp = enemy.getComponentOptional(MeleeEnemyComponent.class).orElse(null);
                     if (enemyComp != null && !enemyComp.isDead()) {
                         enemyComp.takeDamage(ATTACK_DAMAGE); // Deals 1 hit of damage
                     }

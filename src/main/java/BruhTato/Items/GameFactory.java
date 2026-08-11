@@ -1,6 +1,6 @@
 package BruhTato.Items;
 
-import BruhTato.Enemies.EnemyComponent;
+import BruhTato.Enemies.MeleeEnemyComponent;
 import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
@@ -24,7 +24,7 @@ public class GameFactory implements EntityFactory {
                 .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(radius)))
                 .view(texture("Melee_Enemy_FullHealth.png", 150, 150))
                 .with(new CollidableComponent(true))
-                .with(new EnemyComponent(1.5)) // Fixed speed matching player steps
+                .with(new MeleeEnemyComponent(1.5)) // Fixed speed matching player steps
                 .build();
     }
 }

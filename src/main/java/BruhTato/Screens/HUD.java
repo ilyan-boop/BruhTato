@@ -16,10 +16,17 @@ public class HUD {
     private final VBox container;
 
     public HUD() {
+        // NEW: Ensure global score property is initialized in FXGL
+        if (!getWorldProperties().exists("score")) {
+            set("score", 0);
+        }
 
         healthText = getUIFactoryService().newText("HP: 100 / 100", Color.RED, 40.0);
         waveText = getUIFactoryService().newText("WAVE: 1", Color.GOLD, 30.0);
         scoreText = getUIFactoryService().newText("Score: 0", Color.GOLD, 30.0);
+
+        // NEW: Listen for changes to global score property and update scoreText display
+        getip("score").addListener((obs, oldVal, newVal) -> updateScore(newVal.intValue()));
 
         // Pass initialized FXGL nodes into VBox
         container = new VBox(8, healthText, waveText, scoreText);
@@ -42,6 +49,13 @@ public class HUD {
     public void updateWave(int waveNumber) {
         if (waveText != null) {
             waveText.setText("WAVE: " + waveNumber);
+        }
+    }
+
+    // NEW: Updates score UI display
+    public void updateScore(int score) {
+        if (scoreText != null) {
+            scoreText.setText("Score: " + score);
         }
     }
 

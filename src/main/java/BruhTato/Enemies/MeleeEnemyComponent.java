@@ -13,7 +13,7 @@ import javafx.scene.effect.ColorAdjust;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-public class EnemyComponent extends Component {
+public class MeleeEnemyComponent extends Component {
 
     private double speed; // Fixed per-tick step matching Player movement
 
@@ -29,11 +29,11 @@ public class EnemyComponent extends Component {
     private double fadeTimer = 0.0;
     private final double FADE_DURATION = 1.0; // Seconds to fade out after dying
 
-    public EnemyComponent(double speed) {
+    public MeleeEnemyComponent(double speed) {
         this.speed = speed;
     }
 
-    public EnemyComponent() {
+    public MeleeEnemyComponent() {
         this(3.5);
     }
 
@@ -160,6 +160,13 @@ public class EnemyComponent extends Component {
     // Triggers death state, disables collisions, and updates texture
     private void die() {
         isDead = true;
+
+        // NEW: Award 100 points to score on enemy defeat
+        if (getWorldProperties().exists("score")) {
+            inc("score", 100);
+        } else {
+            set("score", 100);
+        }
 
         // Disable collision component so player and attacks pass through dead body
         entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(false));
