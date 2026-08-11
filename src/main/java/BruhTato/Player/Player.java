@@ -1,5 +1,8 @@
 package BruhTato.Player;
 
+import BruhTato.Items.ItemComponent;
+import BruhTato.Items.ItemType;
+import BruhTato.Items.WeaponType;
 import BruhTato.Screens.HUD;
 import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
@@ -10,6 +13,7 @@ import com.almasb.fxgl.texture.Texture;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.effect.ColorAdjust;
+import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -20,7 +24,7 @@ public class Player {
     private static final double SPEED = 3.5;
     private HUD hud;
 
-    // NEW: Callback reference to return to Main Menu upon defeat
+    // Callback reference to return to Main Menu upon defeat
     private final Runnable onReturnToMenu;
 
     private final int maxHealth = 100;
@@ -34,14 +38,19 @@ public class Player {
     private boolean isInvincible = false;
     private final double INVINCIBILITY_DURATION = 2.0; // 2 Seconds
 
+    // Shield powerup parameters (scalable by difficulty)
+    private boolean isShielded = false;
+    private int healthRestoreAmount = 25; // Default normal heal amount
+    private double shieldDuration = 5.0;   // Default normal shield duration in seconds
+
     private double borderDamageTimer = 0.0;
     private final double DAMAGE_INTERVAL = 1.0;
     private final int BORDER_DAMAGE = 5;
 
-    // MODIFIED: Updated constructor to accept onReturnToMenu Runnable
     public Player(Runnable onReturnToMenu) {
         this.onReturnToMenu = onReturnToMenu;
         weaponComponent = new WeaponComponent();
+        weaponComponent.setPlayerRef(this);
 
         entity = entityBuilder()
                 .type(EntityType.PLAYER)
@@ -55,14 +64,40 @@ public class Player {
                 .buildAndAttach();
     }
 
-    // NEW: Convenience constructor for backward compatibility
     public Player() {
         this(null);
+    }
+
+    // Adjusts item pickup potency according to difficulty setting
+    public void setDifficulty(String difficulty) {
+        switch (difficulty.toLowerCase()) {
+            case "easy" -> {
+                healthRestoreAmount = 40;
+                shieldDuration = 7.0;
+            }
+            case "hard" -> {
+                healthRestoreAmount = 15;
+                shieldDuration = 3.0;
+            }
+            default -> { // Normal
+                healthRestoreAmount = 25;
+                shieldDuration = 5.0;
+            }
+        }
     }
 
     public void attachHUD(HUD hud) {
         this.hud = hud;
         updateHUD();
+        updateHUDWeaponInfo();
+    }
+
+    // Updates weapon status display on the HUD
+    public void updateHUDWeaponInfo() {
+        if (hud != null && weaponComponent != null) {
+            WeaponType weapon = weaponComponent.getCurrentWeapon();
+            hud.updateWeapon(weapon.getDisplayName(), weaponComponent.getRemainingUses(), weapon.getMaxUses());
+        }
     }
 
     public void attack() {
@@ -86,6 +121,55 @@ public class Player {
             entity.translateX(-dx);
             entity.translateY(-dy);
         }
+
+        // Check for item collisions on player movement
+        checkItemCollisions();
+    }
+
+    // Checks collision with spawned item entities
+    private void checkItemCollisions() {
+        getGameWorld().getEntitiesByType(EntityType.ITEM).stream()
+                .filter(entity::isColliding)
+                .forEach(itemEntity -> {
+                    ItemComponent itemComp = itemEntity.getComponentOptional(ItemComponent.class).orElse(null);
+                    if (itemComp != null) {
+                        applyItemEffect(itemComp.getItemType());
+                        itemEntity.removeFromWorld(); // Despawn collected item
+                    }
+                });
+    }
+
+    // Applies state modification based on item type
+    private void applyItemEffect(ItemType type) {
+        switch (type) {
+            case HEALTH -> {
+                currentHealth = Math.min(maxHealth, currentHealth + healthRestoreAmount);
+                updateHUD();
+                updateHealthVisual();
+            }
+            case SHIELD -> grantShieldInvulnerability(shieldDuration);
+            case SWORD -> weaponComponent.equipWeapon(WeaponType.SWORD);
+            case SPEAR -> weaponComponent.equipWeapon(WeaponType.SPEAR);
+            case AXE -> weaponComponent.equipWeapon(WeaponType.AXE);
+        }
+    }
+
+    // Grants temporary invulnerability with a visual aura effect
+    private void grantShieldInvulnerability(double duration) {
+        isShielded = true;
+
+        ColorAdjust shieldTint = new ColorAdjust();
+        shieldTint.setHue(0.6); // Cyan/Blue aura
+        if (entity.getViewComponent().getParent() != null) {
+            entity.getViewComponent().getParent().setEffect(shieldTint);
+        }
+
+        runOnce(() -> {
+            isShielded = false;
+            if (!isDead && entity.getViewComponent().getParent() != null) {
+                entity.getViewComponent().getParent().setEffect(null);
+            }
+        }, Duration.seconds(duration));
     }
 
     public void updateBorderDamage(double tpf) {
@@ -104,7 +188,7 @@ public class Player {
     }
 
     public void takeDamageWithKnockback(int amount, Point2D direction, double distance) {
-        if (isDead || isInvincible) return; // Block damage & knockback if dead or invincible
+        if (isDead || isInvincible || isShielded) return; // Block damage & knockback if dead, invincible, or shielded
 
         takeDamage(amount);
         applyKnockback(direction, distance);
@@ -131,12 +215,12 @@ public class Player {
     }
 
     public void takeDamage(int amount) {
-        if (isDead || isInvincible) return; // Block damage if dead or invincible
+        if (isDead || isInvincible || isShielded) return; // Block damage if dead, invincible, or shielded
 
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
 
-        // MODIFIED: Deduct score when taking damage (ensuring score doesn't drop below 0)
+        // Deduct score when taking damage (ensuring score doesn't drop below 0)
         if (getWorldProperties().exists("score")) {
             int currentScore = geti("score");
             set("score", Math.max(0, currentScore - amount));
@@ -157,13 +241,17 @@ public class Player {
         ColorAdjust redFlash = new ColorAdjust();
         redFlash.setHue(-0.005);
         redFlash.setSaturation(1.0);
-        entity.getViewComponent().getParent().setEffect(redFlash);
+        if (entity.getViewComponent().getParent() != null) {
+            entity.getViewComponent().getParent().setEffect(redFlash);
+        }
         entity.getViewComponent().setOpacity(0.5);
 
         // Remove red tint flash after 0.15s
         runOnce(() -> {
-            entity.getViewComponent().getParent().setEffect(null);
-        }, javafx.util.Duration.seconds(0.15));
+            if (!isShielded && entity.getViewComponent().getParent() != null) {
+                entity.getViewComponent().getParent().setEffect(null);
+            }
+        }, Duration.seconds(0.15));
 
         // Expire invincibility and restore opacity after 2.0 seconds
         runOnce(() -> {
@@ -171,11 +259,10 @@ public class Player {
                 isInvincible = false;
                 entity.getViewComponent().setOpacity(1.0);
             }
-        }, javafx.util.Duration.seconds(INVINCIBILITY_DURATION));
+        }, Duration.seconds(INVINCIBILITY_DURATION));
     }
 
     // Handles death state, disables collisions, and displays Game Over screen
-    // MODIFIED: Passes onReturnToMenu callback to showGameOver
     private void die() {
         isDead = true;
 
@@ -197,9 +284,8 @@ public class Player {
                 Texture deadTexture = texture("Bruhtato_Dead.png", 200, 200);
                 updateEntityTexture(deadTexture);
             } catch (Exception e) {
-                // Fallback tint if Bruhtato_Dead.png asset is missing
                 ColorAdjust deadTint = new ColorAdjust();
-                deadTint.setSaturation(-1.0); // Desaturate
+                deadTint.setSaturation(-1.0);
                 if (entity.getViewComponent().getParent() != null) {
                     entity.getViewComponent().getParent().setEffect(deadTint);
                 }
@@ -209,11 +295,19 @@ public class Player {
                 Texture halfTexture = texture("Bruhtato_HalfHealth.png", 200, 200);
                 updateEntityTexture(halfTexture);
             } catch (Exception e) {
-                // Fallback tint if Bruhtato_HalfHealth.png asset is missing
                 ColorAdjust damagedTint = new ColorAdjust();
                 damagedTint.setBrightness(-0.3);
                 if (entity.getViewComponent().getParent() != null) {
                     entity.getViewComponent().getParent().setEffect(damagedTint);
+                }
+            }
+        } else {
+            try {
+                Texture fullTexture = texture("Bruhtato_FullHealth.png", 200, 200);
+                updateEntityTexture(fullTexture);
+            } catch (Exception e) {
+                if (entity.getViewComponent().getParent() != null) {
+                    entity.getViewComponent().getParent().setEffect(null);
                 }
             }
         }
