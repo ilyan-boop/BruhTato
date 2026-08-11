@@ -1,6 +1,6 @@
 package BruhTato;
 
-import BruhTato.Items.GameFactory;
+import BruhTato.Utils.GameFactory;
 import BruhTato.Screens.MainMenu;
 import BruhTato.Utils.BorderFactory;
 import BruhTato.Player.Player;

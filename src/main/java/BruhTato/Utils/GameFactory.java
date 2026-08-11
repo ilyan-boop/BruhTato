@@ -1,7 +1,6 @@
-package BruhTato.Items;
+package BruhTato.Utils;
 
 import BruhTato.Enemies.MeleeEnemyComponent;
-import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.EntityFactory;
 import com.almasb.fxgl.entity.SpawnData;
