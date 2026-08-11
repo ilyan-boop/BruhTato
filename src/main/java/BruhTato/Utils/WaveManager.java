@@ -1,7 +1,9 @@
 package BruhTato.Utils;
 
+import BruhTato.Items.ItemType;
 import BruhTato.Screens.HUD;
 import BruhTato.Utils.EntityType;
+import com.almasb.fxgl.entity.SpawnData;
 import javafx.geometry.Point2D;
 import javafx.util.Duration;
 
@@ -10,7 +12,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class WaveManager {
 
     private final HUD hud;
-    // NEW: Callback reference to return to Main Menu
+    // Callback reference to return to Main Menu
     private final Runnable onReturnToMenu;
     private int currentWave = 0;
     private final int maxWaves = 3;
@@ -19,13 +21,11 @@ public class WaveManager {
     // Difficulty configuration (Easy mode defaults)
     private final int[] waveEnemyCounts = {3, 6, 9};
 
-    // MODIFIED: Updated constructor to accept onReturnToMenu Runnable
     public WaveManager(HUD hud, Runnable onReturnToMenu) {
         this.hud = hud;
         this.onReturnToMenu = onReturnToMenu;
     }
 
-    // NEW: Convenience constructor for backward compatibility
     public WaveManager(HUD hud) {
         this(hud, null);
     }
@@ -50,9 +50,42 @@ public class WaveManager {
 
         int countToSpawn = waveEnemyCounts[currentWave - 1];
         spawnWaveEnemies(countToSpawn);
+        spawnWaveItems();
     }
 
-    // MODIFIED: Spawns enemies only along the inner screen borders
+    // Spawns weapons and pickup items inside the playable field for the current wave
+    private void spawnWaveItems() {
+        // Define safe inner screen bounds for item spawns
+        double minX = 300.0;
+        double maxX = getAppWidth() - 300.0;
+        double minY = 250.0;
+        double maxY = getAppHeight() - 250.0;
+
+        // Guaranteed weapon spawn based on wave progression
+        ItemType weaponType = switch (currentWave) {
+            case 1 -> ItemType.SWORD;
+            case 2 -> ItemType.SPEAR;
+            default -> ItemType.AXE;
+        };
+
+        spawnItemAtRandomLocation(weaponType, minX, maxX, minY, maxY);
+
+        // Spawn consumable items (Health & Shield pickups)
+        spawnItemAtRandomLocation(ItemType.HEALTH, minX, maxX, minY, maxY);
+
+        if (currentWave >= 2) {
+            spawnItemAtRandomLocation(ItemType.SHIELD, minX, maxX, minY, maxY);
+        }
+    }
+
+    private void spawnItemAtRandomLocation(ItemType itemType, double minX, double maxX, double minY, double maxY) {
+        double spawnX = random(minX, maxX);
+        double spawnY = random(minY, maxY);
+
+        spawn("item", new SpawnData(spawnX, spawnY).put("itemType", itemType));
+    }
+
+    // Spawns enemies along the inner screen borders
     private void spawnWaveEnemies(int count) {
         double enemyWidth = 150.0;
         double enemyHeight = 150.0;
@@ -69,7 +102,7 @@ public class WaveManager {
         }
     }
 
-    // NEW: Calculates random coordinates along top, bottom, left, or right border edges
+    // Calculates random coordinates along top, bottom, left, or right border edges
     private Point2D getRandomBorderPosition(double minX, double maxX, double minY, double maxY) {
         int side = random(0, 3); // 0: Top, 1: Bottom, 2: Left, 3: Right
 
@@ -96,7 +129,7 @@ public class WaveManager {
         }
     }
 
-    // MODIFIED: Displays victory screen via HUD instead of console output
+    // Displays victory screen via HUD
     private void triggerVictory() {
         if (hud != null) {
             hud.showVictory(onReturnToMenu);
