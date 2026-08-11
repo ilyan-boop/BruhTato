@@ -7,13 +7,15 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
+import java.util.function.Consumer;
+
 import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class MainMenu {
 
     private final VBox menuContainer;
 
-    public MainMenu(Runnable onStartGame) {
+    public MainMenu(Consumer<String> onStartGame) {
         menuContainer = new VBox(20);
         menuContainer.setAlignment(Pos.CENTER);
         menuContainer.setPadding(new Insets(30));
@@ -29,7 +31,7 @@ public class MainMenu {
     }
 
     // Step 1: Initial Start Menu
-    private void showTitleMenu(Runnable onStartGame) {
+    private void showTitleMenu(Consumer<String> onStartGame) {
         menuContainer.getChildren().clear();
 
         Text titleText = getUIFactoryService().newText("BRUHTATO", Color.GOLD, 64.0);
@@ -46,22 +48,22 @@ public class MainMenu {
     }
 
     // Step 2: Difficulty Selection Menu
-    private void showDifficultyMenu(Runnable onStartGame) {
+    private void showDifficultyMenu(Consumer<String> onStartGame) {
         menuContainer.getChildren().clear();
 
         Text difficultyTitle = getUIFactoryService().newText("SELECT DIFFICULTY", Color.WHITE, 36.0);
 
         Button easyBtn = getUIFactoryService().newButton("EASY");
         easyBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
-        easyBtn.setOnAction(e -> launchGame(onStartGame));
+        easyBtn.setOnAction(e -> launchGame(onStartGame, "Easy"));
 
         Button mediumBtn = getUIFactoryService().newButton("MEDIUM");
         mediumBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
-        mediumBtn.setOnAction(e -> launchGame(onStartGame));
+        mediumBtn.setOnAction(e -> launchGame(onStartGame, "Medium"));
 
         Button hardBtn = getUIFactoryService().newButton("HARD");
         hardBtn.setStyle("-fx-font-size: 18px; -fx-min-width: 220px;");
-        hardBtn.setOnAction(e -> launchGame(onStartGame));
+        hardBtn.setOnAction(e -> launchGame(onStartGame, "Hard"));
 
         Button backBtn = getUIFactoryService().newButton("BACK");
         backBtn.setStyle("-fx-font-size: 16px; -fx-min-width: 220px;");
@@ -70,11 +72,11 @@ public class MainMenu {
         menuContainer.getChildren().addAll(difficultyTitle, easyBtn, mediumBtn, hardBtn, backBtn);
     }
 
-    // Removes the UI menu overlay and triggers gameplay initialization
-    private void launchGame(Runnable onStartGame) {
+    // Removes the UI menu overlay and passes selected difficulty back to the app
+    private void launchGame(Consumer<String> onStartGame, String difficulty) {
         removeUINode(menuContainer);
         if (onStartGame != null) {
-            onStartGame.run();
+            onStartGame.accept(difficulty);
         }
     }
 

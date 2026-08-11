@@ -1,10 +1,10 @@
 package BruhTato;
 
-import BruhTato.Utils.GameFactory;
-import BruhTato.Screens.MainMenu;
-import BruhTato.Utils.BorderFactory;
 import BruhTato.Player.Player;
 import BruhTato.Screens.HUD;
+import BruhTato.Screens.MainMenu;
+import BruhTato.Utils.BorderFactory;
+import BruhTato.Utils.GameFactory;
 import BruhTato.Utils.WaveManager;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
@@ -32,7 +32,6 @@ public class BruhTatoApplication extends GameApplication {
 
     @Override
     protected void initInput() {
-        // MODIFIED: Added null checks so inputs are ignored before the player is spawned
         onKey(KeyCode.W, () -> { if (player != null) player.moveUp(); });
         onKey(KeyCode.S, () -> { if (player != null) player.moveDown(); });
         onKey(KeyCode.A, () -> { if (player != null) player.moveLeft(); });
@@ -47,37 +46,29 @@ public class BruhTatoApplication extends GameApplication {
         getPhysicsWorld().setGravity(0, 0);
 
         getGameWorld().addEntityFactory(new GameFactory());
-
-        // MODIFIED: Deferred spawning borders, player, and enemy until after difficulty selection
     }
 
     @Override
     protected void initUI() {
-        // MODIFIED: Show only the Main Menu initially
         showMainMenu();
     }
 
-    // NEW: Instantiates and attaches Main Menu UI
     private void showMainMenu() {
-        MainMenu menu = new MainMenu(() -> {
-            // Callback executed when any difficulty is selected
-            System.out.println("Starting Game...");
-            startGame();
+        MainMenu menu = new MainMenu(difficulty -> {
+            System.out.println("Starting Game with difficulty: " + difficulty);
+            startGame(difficulty);
         });
 
         menu.attachToUI();
     }
 
-    // NEW: Clears world entities, resets game state, and shows Main Menu UI
     private void returnToMainMenu() {
-        // Despawn all active entities in world (Player, Enemies, Borders)
         getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
 
         player = null;
         waveManager = null;
         hud = null;
 
-        // Reset global score property
         if (getWorldProperties().exists("score")) {
             set("score", 0);
         }
@@ -85,17 +76,15 @@ public class BruhTatoApplication extends GameApplication {
         showMainMenu();
     }
 
-    // NEW: Handles initialization of game entities and HUD after difficulty selection
-    // MODIFIED: Removed static test enemy spawn and attached returnToMainMenu callback
-    private void startGame() {
+    private void startGame(String difficulty) {
         BorderFactory.spawnScreenBorders();
 
         player = new Player(this::returnToMainMenu);
+        player.setDifficulty(difficulty);
 
         hud = new HUD();
         hud.attachToGame();
 
-        // Link HUD to player for health bar updates
         if (player != null) {
             player.attachHUD(hud);
         }
@@ -113,5 +102,9 @@ public class BruhTatoApplication extends GameApplication {
         if (waveManager != null) {
             waveManager.onUpdate(tpf);
         }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }
