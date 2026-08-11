@@ -8,6 +8,7 @@ import BruhTato.Screens.HUD;
 import BruhTato.Utils.WaveManager;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
+import com.almasb.fxgl.entity.Entity;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
@@ -53,6 +54,11 @@ public class BruhTatoApplication extends GameApplication {
     @Override
     protected void initUI() {
         // MODIFIED: Show only the Main Menu initially
+        showMainMenu();
+    }
+
+    // NEW: Instantiates and attaches Main Menu UI
+    private void showMainMenu() {
         MainMenu menu = new MainMenu(() -> {
             // Callback executed when any difficulty is selected
             System.out.println("Starting Game...");
@@ -62,15 +68,29 @@ public class BruhTatoApplication extends GameApplication {
         menu.attachToUI();
     }
 
+    // NEW: Clears world entities, resets game state, and shows Main Menu UI
+    private void returnToMainMenu() {
+        // Despawn all active entities in world (Player, Enemies, Borders)
+        getGameWorld().getEntitiesCopy().forEach(Entity::removeFromWorld);
+
+        player = null;
+        waveManager = null;
+        hud = null;
+
+        // Reset global score property
+        if (getWorldProperties().exists("score")) {
+            set("score", 0);
+        }
+
+        showMainMenu();
+    }
+
     // NEW: Handles initialization of game entities and HUD after difficulty selection
+    // MODIFIED: Removed static test enemy spawn and attached returnToMainMenu callback
     private void startGame() {
         BorderFactory.spawnScreenBorders();
 
-        player = new Player();
-
-        double centerX = getAppWidth() / 2.0;
-        double centerY = getAppHeight() / 2.0;
-        spawn("enemy", centerX, centerY);
+        player = new Player(this::returnToMainMenu);
 
         hud = new HUD();
         hud.attachToGame();
@@ -80,7 +100,7 @@ public class BruhTatoApplication extends GameApplication {
             player.attachHUD(hud);
         }
 
-        waveManager = new WaveManager(hud);
+        waveManager = new WaveManager(hud, this::returnToMainMenu);
         waveManager.startWaves();
     }
 
