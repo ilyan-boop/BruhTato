@@ -92,11 +92,14 @@ public class Player {
         updateHUDWeaponInfo();
     }
 
-    // Updates weapon status display on the HUD
+    // Updates weapon status display on the HUD and syncs sprite texture
     public void updateHUDWeaponInfo() {
-        if (hud != null && weaponComponent != null) {
+        if (weaponComponent != null) {
             WeaponType weapon = weaponComponent.getCurrentWeapon();
-            hud.updateWeapon(weapon.getDisplayName(), weaponComponent.getRemainingUses(), weapon.getMaxUses());
+            if (hud != null) {
+                hud.updateWeapon(weapon.getDisplayName(), weaponComponent.getRemainingUses(), weapon.getMaxUses());
+            }
+            updateHealthVisual();
         }
     }
 
@@ -148,9 +151,18 @@ public class Player {
                 updateHealthVisual();
             }
             case SHIELD -> grantShieldInvulnerability(shieldDuration);
-            case SWORD -> weaponComponent.equipWeapon(WeaponType.SWORD);
-            case SPEAR -> weaponComponent.equipWeapon(WeaponType.SPEAR);
-            case AXE -> weaponComponent.equipWeapon(WeaponType.AXE);
+            case SWORD -> {
+                weaponComponent.equipWeapon(WeaponType.SWORD);
+                updateHealthVisual();
+            }
+            case SPEAR -> {
+                weaponComponent.equipWeapon(WeaponType.SPEAR);
+                updateHealthVisual();
+            }
+            case AXE -> {
+                weaponComponent.equipWeapon(WeaponType.AXE);
+                updateHealthVisual();
+            }
         }
     }
 
@@ -226,7 +238,7 @@ public class Player {
             set("score", Math.max(0, currentScore - amount));
         }
 
-        // Update player texture visual based on health state (Full -> Half -> Dead)
+        // Update player texture visual based on health and weapon state
         updateHealthVisual();
 
         if (currentHealth <= 0) {
@@ -277,7 +289,7 @@ public class Player {
         System.out.println("Player Defeated!");
     }
 
-    // Updates player sprite texture between Full, Half, and Dead states safely
+    // Dynamically updates player sprite based on health status (Full/Half/Dead) and equipped weapon
     private void updateHealthVisual() {
         if (currentHealth <= 0) {
             try {
@@ -290,22 +302,32 @@ public class Player {
                     entity.getViewComponent().getParent().setEffect(deadTint);
                 }
             }
-        } else if (currentHealth <= maxHealth / 2) {
-            try {
-                Texture halfTexture = texture("Bruhtato_HalfHealth.png", 200, 200);
-                updateEntityTexture(halfTexture);
-            } catch (Exception e) {
+            return;
+        }
+
+        String healthPrefix = (currentHealth > maxHealth / 2) ? "Bruhtato_FullHealth" : "Bruhtato_HalfHealth";
+        WeaponType weapon = (weaponComponent != null) ? weaponComponent.getCurrentWeapon() : WeaponType.DEFAULT;
+
+        String weaponSuffix = switch (weapon) {
+            case AXE -> "_Axe";
+            case SPEAR -> "_Spear";
+            case SWORD -> "_Sword";
+            default -> "";
+        };
+
+        String textureFileName = healthPrefix + weaponSuffix + ".png";
+
+        try {
+            Texture playerTexture = texture(textureFileName, 200, 200);
+            updateEntityTexture(playerTexture);
+        } catch (Exception e) {
+            if (currentHealth <= maxHealth / 2) {
                 ColorAdjust damagedTint = new ColorAdjust();
                 damagedTint.setBrightness(-0.3);
                 if (entity.getViewComponent().getParent() != null) {
                     entity.getViewComponent().getParent().setEffect(damagedTint);
                 }
-            }
-        } else {
-            try {
-                Texture fullTexture = texture("Bruhtato_FullHealth.png", 200, 200);
-                updateEntityTexture(fullTexture);
-            } catch (Exception e) {
+            } else {
                 if (entity.getViewComponent().getParent() != null) {
                     entity.getViewComponent().getParent().setEffect(null);
                 }
