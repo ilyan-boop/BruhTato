@@ -12,7 +12,6 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class WaveManager {
 
     private final HUD hud;
-    // Callback reference to return to Main Menu
     private final Runnable onReturnToMenu;
     private int currentWave = 0;
     private final int maxWaves = 3;
@@ -30,12 +29,11 @@ public class WaveManager {
         this(hud, null);
     }
 
-    // Configures wave enemy counts based on selected difficulty
     public void setDifficulty(String difficulty) {
         switch (difficulty.toLowerCase()) {
             case "medium" -> waveEnemyCounts = new int[]{6, 9, 12};
             case "hard" -> waveEnemyCounts = new int[]{9, 12, 15};
-            default -> waveEnemyCounts = new int[]{3, 6, 9}; // Easy
+            default -> waveEnemyCounts = new int[]{3, 6, 9};
         }
     }
 
@@ -64,18 +62,14 @@ public class WaveManager {
 
     // Spawns weapons and pickup items inside the playable field for the current wave
     private void spawnWaveItems() {
-        // Define safe inner screen bounds for item spawns
         double minX = 300.0;
         double maxX = getAppWidth() - 300.0;
         double minY = 250.0;
         double maxY = getAppHeight() - 250.0;
 
-        // Guaranteed weapon spawn based on wave progression
-        ItemType weaponType = switch (currentWave) {
-            case 1 -> ItemType.SWORD;
-            case 2 -> ItemType.SPEAR;
-            default -> ItemType.AXE;
-        };
+        // Select a random weapon type on each wave spawn
+        ItemType[] weapons = {ItemType.SWORD, ItemType.SPEAR, ItemType.AXE};
+        ItemType weaponType = weapons[random(0, weapons.length - 1)];
 
         spawnItemAtRandomLocation(weaponType, minX, maxX, minY, maxY);
 
@@ -94,11 +88,10 @@ public class WaveManager {
         spawn("item", new SpawnData(spawnX, spawnY).put("itemType", itemType));
     }
 
-    // Spawns enemies along the inner screen borders
     private void spawnWaveEnemies(int count) {
         double enemyWidth = 150.0;
         double enemyHeight = 150.0;
-        double margin = 110.0; // Margin offset near border
+        double margin = 110.0;
 
         double minX = margin;
         double maxX = getAppWidth() - margin - enemyWidth;
@@ -111,34 +104,30 @@ public class WaveManager {
         }
     }
 
-    // Calculates random coordinates along top, bottom, left, or right border edges
     private Point2D getRandomBorderPosition(double minX, double maxX, double minY, double maxY) {
-        int side = random(0, 3); // 0: Top, 1: Bottom, 2: Left, 3: Right
+        int side = random(0, 3);
 
         return switch (side) {
-            case 0 -> new Point2D(random(minX, maxX), minY);              // Top Border
-            case 1 -> new Point2D(random(minX, maxX), maxY);              // Bottom Border
-            case 2 -> new Point2D(minX, random(minY, maxY));              // Left Border
-            default -> new Point2D(maxX, random(minY, maxY));             // Right Border
+            case 0 -> new Point2D(random(minX, maxX), minY);
+            case 1 -> new Point2D(random(minX, maxX), maxY);
+            case 2 -> new Point2D(minX, random(minY, maxY));
+            default -> new Point2D(maxX, random(minY, maxY));
         };
     }
 
     public void onUpdate(double tpf) {
         if (!waveInProgress) return;
 
-        // Check if all active enemies are defeated
         long activeEnemies = getGameWorld().getEntitiesByType(EntityType.ENEMY).stream()
                 .filter(e -> e.isActive())
                 .count();
 
         if (activeEnemies == 0) {
             waveInProgress = false;
-            // Delay 2 seconds before launching next wave
             runOnce(this::nextWave, Duration.seconds(2.0));
         }
     }
 
-    // Displays victory screen via HUD
     private void triggerVictory() {
         if (hud != null) {
             hud.showVictory(onReturnToMenu);
