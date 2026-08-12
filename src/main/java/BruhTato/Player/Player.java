@@ -68,16 +68,16 @@ public class Player {
     public void setDifficulty(String difficulty) {
         switch (difficulty.toLowerCase()) {
             case "easy" -> {
-                healthRestoreAmount = 40;
+                healthRestoreAmount = 100;
                 shieldDuration = 10.0;
             }
             case "hard" -> {
-                healthRestoreAmount = 15;
-                shieldDuration = 3.0;
+                healthRestoreAmount = 50;
+                shieldDuration = 5.0;
             }
             default -> { // Medium
-                healthRestoreAmount = 25;
-                shieldDuration = 5.0;
+                healthRestoreAmount = 75;
+                shieldDuration = 7.5;
             }
         }
     }

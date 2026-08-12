@@ -19,7 +19,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 public class WeaponComponent extends Component {
 
     // Default weapon (Fists) baseline parameters
-    private final double DEFAULT_ATTACK_RANGE = 200.0;   // Reach length of attack rectangle
+    private final double DEFAULT_ATTACK_RANGE = 180.0;   // Reach length of attack rectangle
     private final double DEFAULT_ATTACK_WIDTH = 20.0;    // Narrow width of the attack rectangle
     private final double DEFAULT_ATTACK_DURATION = 0.15; // How long (in seconds) swing stays visible
     private final int DEFAULT_ATTACK_DAMAGE = 1;         // 1 Hit per swing

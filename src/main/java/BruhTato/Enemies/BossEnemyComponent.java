@@ -22,7 +22,7 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class BossEnemyComponent extends BaseEnemyComponent {
 
-    private double speed = 2.0;
+    private double speed = 1.5;
     private int contactDamage = 15;
     private double knockbackDistance = 60.0;
 
@@ -56,7 +56,7 @@ public class BossEnemyComponent extends BaseEnemyComponent {
     }
 
     public BossEnemyComponent() {
-        this(2.0);
+        this(1.5);
     }
 
     @Override

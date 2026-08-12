@@ -19,7 +19,11 @@ public class WaveManager {
     private int currentWave = 0;
     private int maxWaves = 3;
     private boolean waveInProgress = false;
-    private boolean isBossSpawning = false; // Prevents premature wave completion during boss prompt
+    private boolean isBossSpawning = false;
+
+    // Timer for periodic weapon spawns during Wave 4
+    private double weaponSpawnTimer = 0.0;
+    private final double WEAPON_SPAWN_INTERVAL = 10.0;
 
     private String difficulty = "easy";
     private int[] waveEnemyCounts = {3, 6, 9};
@@ -58,6 +62,7 @@ public class WaveManager {
     public void startWaves() {
         currentWave = 0;
         isBossSpawning = false;
+        weaponSpawnTimer = 0.0;
         nextWave();
     }
 
@@ -69,6 +74,7 @@ public class WaveManager {
 
         currentWave++;
         waveInProgress = true;
+        weaponSpawnTimer = 0.0;
 
         if (hud != null) {
             hud.updateWave(currentWave);
@@ -84,26 +90,33 @@ public class WaveManager {
             getGameWorld().getEntitiesByType(EntityType.ITEM).forEach(Entity::removeFromWorld);
         }
 
+        spawnRandomWeapon();
+
+        if (difficulty.equals("hard")) {
+            ItemType consumable = (currentWave >= 2 && random(0, 1) == 1) ? ItemType.SHIELD : ItemType.HEALTH;
+            spawnItemInArena(consumable);
+        } else {
+            spawnItemInArena(ItemType.HEALTH);
+
+            if (currentWave >= 2) {
+                spawnItemInArena(ItemType.SHIELD);
+            }
+        }
+    }
+
+    private void spawnRandomWeapon() {
+        ItemType[] weapons = {ItemType.SWORD, ItemType.SPEAR, ItemType.AXE};
+        ItemType weaponType = weapons[random(0, weapons.length - 1)];
+        spawnItemInArena(weaponType);
+    }
+
+    private void spawnItemInArena(ItemType itemType) {
         double minX = 300.0;
         double maxX = getAppWidth() - 300.0;
         double minY = 250.0;
         double maxY = getAppHeight() - 250.0;
 
-        ItemType[] weapons = {ItemType.SWORD, ItemType.SPEAR, ItemType.AXE};
-        ItemType weaponType = weapons[random(0, weapons.length - 1)];
-
-        spawnItemAtRandomLocation(weaponType, minX, maxX, minY, maxY);
-
-        if (difficulty.equals("hard")) {
-            ItemType consumable = (currentWave >= 2 && random(0, 1) == 1) ? ItemType.SHIELD : ItemType.HEALTH;
-            spawnItemAtRandomLocation(consumable, minX, maxX, minY, maxY);
-        } else {
-            spawnItemAtRandomLocation(ItemType.HEALTH, minX, maxX, minY, maxY);
-
-            if (currentWave >= 2) {
-                spawnItemAtRandomLocation(ItemType.SHIELD, minX, maxX, minY, maxY);
-            }
-        }
+        spawnItemAtRandomLocation(itemType, minX, maxX, minY, maxY);
     }
 
     private void spawnItemAtRandomLocation(ItemType itemType, double minX, double maxX, double minY, double maxY) {
@@ -127,7 +140,6 @@ public class WaveManager {
 
             Point2D bossSpawnPos = getRandomBorderPosition(bossMinX, bossMaxX, bossMinY, bossMaxY);
 
-            // Show flashing indicator prompt prior to spawning the Boss
             showBossSpawnWarningPrompt(bossSpawnPos);
             return;
         }
@@ -155,12 +167,10 @@ public class WaveManager {
         }
     }
 
-    // Creates a red flashing indicator circle centered on where the Boss is about to spawn
     private void showBossSpawnWarningPrompt(Point2D spawnPos) {
         isBossSpawning = true;
-        double radius = 150.0; // Half of Boss size (300x300)
+        double radius = 150.0;
 
-        // Setting (centerX, centerY) to radius offsets local space so (0,0) aligns with spawnPos top-left
         Circle warningShape = new Circle(radius, radius, radius, Color.rgb(255, 0, 0, 0.45));
         warningShape.setStroke(Color.DARKRED);
         warningShape.setStrokeWidth(4.0);
@@ -170,35 +180,30 @@ public class WaveManager {
                 .view(warningShape)
                 .buildAndAttach();
 
-        // Flash 1 (Fade out at 0.3s)
         runOnce(() -> {
             if (warningPrompt.isActive()) {
                 warningPrompt.getViewComponent().setOpacity(0.15);
             }
         }, Duration.seconds(0.3));
 
-        // Flash 2 (Fade in at 0.6s)
         runOnce(() -> {
             if (warningPrompt.isActive()) {
                 warningPrompt.getViewComponent().setOpacity(1.0);
             }
         }, Duration.seconds(0.6));
 
-        // Flash 3 (Fade out at 0.9s)
         runOnce(() -> {
             if (warningPrompt.isActive()) {
                 warningPrompt.getViewComponent().setOpacity(0.15);
             }
         }, Duration.seconds(0.9));
 
-        // Flash 4 (Fade in at 1.2s)
         runOnce(() -> {
             if (warningPrompt.isActive()) {
                 warningPrompt.getViewComponent().setOpacity(1.0);
             }
         }, Duration.seconds(1.2));
 
-        // Despawn prompt visual, spawn Boss, and resume active enemy tracking
         runOnce(() -> {
             if (warningPrompt.isActive()) {
                 warningPrompt.removeFromWorld();
@@ -220,8 +225,16 @@ public class WaveManager {
     }
 
     public void onUpdate(double tpf) {
-        // Do not check for wave clear if wave isn't running or boss is currently spawning
         if (!waveInProgress || isBossSpawning) return;
+
+        // Handles 10-second periodic weapon spawns during Wave 4
+        if (currentWave == 4) {
+            weaponSpawnTimer += tpf;
+            if (weaponSpawnTimer >= WEAPON_SPAWN_INTERVAL) {
+                weaponSpawnTimer = 0.0;
+                spawnRandomWeapon();
+            }
+        }
 
         long activeEnemies = getGameWorld().getEntitiesByType(EntityType.ENEMY).stream()
                 .filter(e -> e.isActive())
