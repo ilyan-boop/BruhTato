@@ -100,6 +100,7 @@ public class BruhTatoApplication extends GameApplication {
     @Override
     protected void onUpdate(double tpf) {
         if (player != null) {
+            player.onUpdate(tpf);
             player.updateBorderDamage(tpf);
         }
 

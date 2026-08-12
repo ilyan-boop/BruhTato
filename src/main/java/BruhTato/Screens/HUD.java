@@ -15,7 +15,10 @@ public class HUD {
     private final Text waveText;
     private final Text scoreText;
     private final Text weaponText;
+    private final Text shieldText;
     private final VBox container;
+
+    private double shieldFlashTimer = 0.0;
 
     public HUD() {
         // Ensure global score property is initialized in FXGL
@@ -27,12 +30,14 @@ public class HUD {
         waveText = getUIFactoryService().newText("WAVE: 1", Color.GOLD, 30.0);
         scoreText = getUIFactoryService().newText("Score: 0", Color.GOLD, 30.0);
         weaponText = getUIFactoryService().newText("Weapon: Default (∞)", Color.LIGHTBLUE, 30.0);
+        shieldText = getUIFactoryService().newText("", Color.CYAN, 30.0);
+        shieldText.setVisible(false);
 
         // Listen for changes to global score property and update scoreText display
         getip("score").addListener((obs, oldVal, newVal) -> updateScore(newVal.intValue()));
 
         // Pass initialized FXGL nodes into VBox
-        container = new VBox(8, healthText, waveText, scoreText, weaponText);
+        container = new VBox(8, healthText, waveText, scoreText, weaponText, shieldText);
         container.setPadding(new Insets(15));
 
         container.setTranslateX(10);
@@ -75,6 +80,27 @@ public class HUD {
             } else {
                 weaponText.setText("Weapon: " + weaponName + " (" + remainingUses + "/" + maxUses + ")");
             }
+        }
+    }
+
+    // Updates shield display and flashes when timer is about to end
+    public void updateShieldStatus(boolean active, double remainingTime, double tpf) {
+        if (shieldText == null) return;
+
+        if (!active) {
+            shieldText.setVisible(false);
+            shieldFlashTimer = 0.0;
+            return;
+        }
+
+        shieldText.setText(String.format("SHIELD: %.1fs", Math.max(0.0, remainingTime)));
+
+        // Flash when remaining time is 1.5s or lower
+        if (remainingTime <= 1.5) {
+            shieldFlashTimer += tpf * 10;
+            shieldText.setVisible(((int) shieldFlashTimer % 2) == 0);
+        } else {
+            shieldText.setVisible(true);
         }
     }
 

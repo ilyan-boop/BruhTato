@@ -36,6 +36,7 @@ public class Player {
     private final double INVINCIBILITY_DURATION = 2.0;
 
     private boolean isShielded = false;
+    private double shieldTimer = 0.0;
     private int healthRestoreAmount = 25;
     private double shieldDuration = 5.0;
 
@@ -68,13 +69,13 @@ public class Player {
         switch (difficulty.toLowerCase()) {
             case "easy" -> {
                 healthRestoreAmount = 40;
-                shieldDuration = 7.0;
+                shieldDuration = 10.0;
             }
             case "hard" -> {
                 healthRestoreAmount = 15;
                 shieldDuration = 3.0;
             }
-            default -> {
+            default -> { // Medium
                 healthRestoreAmount = 25;
                 shieldDuration = 5.0;
             }
@@ -161,19 +162,36 @@ public class Player {
 
     private void grantShieldInvulnerability(double duration) {
         isShielded = true;
+        shieldTimer = duration;
 
         ColorAdjust shieldTint = new ColorAdjust();
         shieldTint.setHue(-0.5);
         if (entity.getViewComponent().getParent() != null) {
             entity.getViewComponent().getParent().setEffect(shieldTint);
         }
+    }
 
-        runOnce(() -> {
-            isShielded = false;
-            if (!isDead && entity.getViewComponent().getParent() != null) {
-                entity.getViewComponent().getParent().setEffect(null);
+    public void onUpdate(double tpf) {
+        if (isDead) return;
+
+        updateBorderDamage(tpf);
+
+        // Update timed shield
+        if (isShielded) {
+            shieldTimer -= tpf;
+            if (shieldTimer <= 0) {
+                isShielded = false;
+                shieldTimer = 0.0;
+                if (entity.getViewComponent().getParent() != null) {
+                    entity.getViewComponent().getParent().setEffect(null);
+                }
             }
-        }, Duration.seconds(duration));
+        }
+
+        // Update HUD shield display
+        if (hud != null) {
+            hud.updateShieldStatus(isShielded, shieldTimer, tpf);
+        }
     }
 
     public void updateBorderDamage(double tpf) {
