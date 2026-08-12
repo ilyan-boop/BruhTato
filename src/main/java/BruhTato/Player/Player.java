@@ -284,6 +284,7 @@ public class Player {
     }
 
     private void die() {
+        play("bruh.wav");
         isDead = true;
 
         entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(false));
