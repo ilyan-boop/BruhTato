@@ -275,7 +275,7 @@ public class Player {
     private void updateHealthVisual() {
         if (currentHealth <= 0) {
             try {
-                Texture deadTexture = texture("Bruhtato_Dead.png", 200, 200);
+                Texture deadTexture = texture("Bruhtato_Dead.png", 220, 220);
                 updateEntityTexture(deadTexture);
             } catch (Exception e) {
                 ColorAdjust deadTint = new ColorAdjust();

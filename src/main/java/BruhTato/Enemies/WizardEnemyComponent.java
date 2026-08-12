@@ -4,7 +4,6 @@ import BruhTato.Player.Player;
 import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
-import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.entity.components.CollidableComponent;
 import com.almasb.fxgl.texture.Texture;
 import javafx.geometry.Point2D;
@@ -16,21 +15,28 @@ import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
-public class WizardEnemyComponent extends BaseEnemyComponent{
+public class WizardEnemyComponent extends BaseEnemyComponent {
 
-    private int spellDamage = 20;
+    private int spellDamage = 15;
     private double spellRadius = 100.0;
-    private double castCooldown = 3.0; // Seconds between spell casts
+    private double castCooldown = 4.0;
     private double castTimer = 0.0;
     private boolean isCasting = false;
 
     // Enemy Health & State tracking
-    private int currentHealth = 2;
+    private int currentHealth = 3;
     private boolean isDead = false;
 
     // Despawn fade timer configuration
     private double fadeTimer = 0.0;
     private final double FADE_DURATION = 1.0;
+
+    @Override
+    public void onAdded() {
+        // Randomize initial timer so wizards do not cast simultaneously at wave start
+        castTimer = FXGL.random(0.0, 2.5);
+        castCooldown = FXGL.random(3.5, 5.0);
+    }
 
     @Override
     public void onUpdate(double tpf) {
@@ -47,11 +53,13 @@ public class WizardEnemyComponent extends BaseEnemyComponent{
             return;
         }
 
-        // Wizard stands still and charges its spell on a timer
+        // Wizard stands still and charges its spell on a randomized timer
         if (!isCasting) {
             castTimer += tpf;
             if (castTimer >= castCooldown) {
                 castTimer = 0.0;
+                // Randomize cooldown interval for the next cast
+                castCooldown = FXGL.random(3.5, 5.5);
                 castSpell();
             }
         }
@@ -91,14 +99,17 @@ public class WizardEnemyComponent extends BaseEnemyComponent{
             spellEntity.getViewComponent().setOpacity(1.0);
             warningCircle.setFill(Color.rgb(255, 0, 0, 0.75)); // Intensify red on hit
 
-            // Check if player is inside spell radius during final flash
+            // Check if player overlaps spell radius during final flash
             Entity currentPlayer = FXGL.getGameWorld()
                     .getSingletonOptional(EntityType.PLAYER)
                     .orElse(null);
 
             if (currentPlayer != null) {
                 double distance = currentPlayer.getCenter().distance(targetPos);
-                if (distance <= spellRadius) {
+                double playerRadius = currentPlayer.getWidth() > 0 ? currentPlayer.getWidth() / 2.0 : 50.0;
+
+                // Hitbox check accounts for player body radius + spell radius
+                if (distance <= (spellRadius + playerRadius)) {
                     Player player = currentPlayer.getObject("playerRef");
                     if (player != null) {
                         Point2D knockbackDir = currentPlayer.getCenter().subtract(targetPos);
@@ -118,6 +129,7 @@ public class WizardEnemyComponent extends BaseEnemyComponent{
         }, Duration.seconds(1.5));
     }
 
+    @Override
     public void takeDamage(int damage) {
         if (isDead) return;
 
@@ -151,7 +163,7 @@ public class WizardEnemyComponent extends BaseEnemyComponent{
 
     private void updateToHalfHealthVisual() {
         try {
-            Texture halfTexture = texture("Wizard_Enemy_HalfHealth.png", 150, 150);
+            Texture halfTexture = texture("Wizard_Enemy_HalfHealth.png", 200, 200);
             updateEntityTexture(halfTexture);
         } catch (Exception e) {
             ColorAdjust damagedTint = new ColorAdjust();
@@ -168,13 +180,13 @@ public class WizardEnemyComponent extends BaseEnemyComponent{
         if (getWorldProperties().exists("score")) {
             inc("score", 150);
         } else {
-            set("score", 150);
+            set("score", 250);
         }
 
         entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(false));
 
         try {
-            Texture deadTexture = texture("Wizard_Enemy_Dead.png", 150, 150);
+            Texture deadTexture = texture("Wizard_Enemy_Dead.png", 200, 200);
             updateEntityTexture(deadTexture);
         } catch (Exception e) {
             ColorAdjust deadTint = new ColorAdjust();
@@ -201,6 +213,7 @@ public class WizardEnemyComponent extends BaseEnemyComponent{
         }
     }
 
+    @Override
     public boolean isDead() {
         return isDead;
     }

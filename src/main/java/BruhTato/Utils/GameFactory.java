@@ -35,7 +35,7 @@ public class GameFactory implements EntityFactory {
     public Entity newWizardEnemy(SpawnData data) {
         return entityBuilder(data)
                 .type(EntityType.ENEMY)
-                .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(70.0)))
+                .bbox(new HitBox(new Point2D(30, 30), BoundingShape.circle(80.0)))
                 .view(texture("Wizard_Enemy_FullHealth.png", 200, 200))
                 .with(new WizardEnemyComponent())
                 .with(new CollidableComponent(true))
