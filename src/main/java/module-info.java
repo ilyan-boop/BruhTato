@@ -8,6 +8,7 @@ module BruhTato{
     opens BruhTato.Screens to com.almasb.fxgl.core;
     opens BruhTato.Utils to com.almasb.fxgl.core;
     opens assets.textures;
+    opens assets.sounds;
 
     exports BruhTato;
 }

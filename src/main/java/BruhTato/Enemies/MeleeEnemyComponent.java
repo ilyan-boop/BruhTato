@@ -183,6 +183,7 @@ public class MeleeEnemyComponent extends BaseEnemyComponent {
 
     // Triggers death state, disables collisions, and updates texture
     private void die() {
+        play("enemy_death.wav");
         isDead = true;
 
         // Award 100 points to score on enemy defeat

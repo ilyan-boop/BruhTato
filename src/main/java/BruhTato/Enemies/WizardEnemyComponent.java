@@ -175,6 +175,7 @@ public class WizardEnemyComponent extends BaseEnemyComponent {
     }
 
     private void die() {
+        play("enemy_death.wav");
         isDead = true;
 
         if (getWorldProperties().exists("score")) {

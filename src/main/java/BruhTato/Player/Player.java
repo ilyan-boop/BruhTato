@@ -140,11 +140,15 @@ public class Player {
     private void applyItemEffect(ItemType type) {
         switch (type) {
             case HEALTH -> {
+                play("heal.wav");
                 currentHealth = Math.min(maxHealth, currentHealth + healthRestoreAmount);
                 updateHUD();
                 updateHealthVisual();
             }
-            case SHIELD -> grantShieldInvulnerability(shieldDuration);
+            case SHIELD -> {
+                play("shield.wav");
+                grantShieldInvulnerability(shieldDuration);
+            }
             case SWORD -> {
                 weaponComponent.equipWeapon(WeaponType.SWORD);
                 updateHealthVisual();
@@ -239,6 +243,7 @@ public class Player {
     public void takeDamage(int amount) {
         if (isDead || isInvincible || isShielded) return;
 
+        play("player_hurt.wav");
         currentHealth = Math.max(0, currentHealth - amount);
         updateHUD();
 

@@ -87,6 +87,7 @@ public class WeaponComponent extends Component {
             return;
         }
 
+
         // Lock attacking state
         canAttack = false;
 
@@ -104,6 +105,7 @@ public class WeaponComponent extends Component {
         // Branch hitbox creation based on weapon specs
         switch (currentWeapon) {
             case SPEAR -> {
+                play("weapon_swing.wav");
                 // Spear: Thin, long rectangle extending forward
                 double spearRange = 400.0;
                 double spearWidth = 15.0;
@@ -125,6 +127,7 @@ public class WeaponComponent extends Component {
                 attackEntity.setRotation(angle);
             }
             case SWORD -> {
+                play("weapon_swing.wav");
                 // Sword: Circle centered exactly at the tip of the aiming line
                 double radius = 80.0;
                 Point2D attackCenter = playerCenter.add(dir.multiply(getCurrentAttackRange()));
@@ -142,6 +145,7 @@ public class WeaponComponent extends Component {
             }
             case AXE -> {
                 // Axe: Circle centered directly on the player's center position
+                play("weapon_swing.wav");
                 double radius = 200;
 
                 Circle axeVisual = new Circle(radius, radius, radius, Color.RED);
@@ -156,6 +160,7 @@ public class WeaponComponent extends Component {
             }
             default -> {
                 // Default Fists: Standard narrow red rectangle extending from player
+                play("fist_swing.wav");
                 Rectangle attackVisual = new Rectangle(DEFAULT_ATTACK_RANGE, DEFAULT_ATTACK_WIDTH, Color.RED);
                 attackVisual.setOpacity(0.7);
 

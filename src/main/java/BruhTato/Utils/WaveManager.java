@@ -21,9 +21,9 @@ public class WaveManager {
     private boolean waveInProgress = false;
     private boolean isBossSpawning = false;
 
-    // Timer for periodic weapon spawns during Wave 4
-    private double weaponSpawnTimer = 0.0;
-    private final double WEAPON_SPAWN_INTERVAL = 10.0;
+    // Timer for periodic spawns during Wave 4
+    private double wave4SpawnTimer = 0.0;
+    private final double SPAWN_INTERVAL = 10.0;
 
     private String difficulty = "easy";
     private int[] waveEnemyCounts = {3, 6, 9};
@@ -62,7 +62,7 @@ public class WaveManager {
     public void startWaves() {
         currentWave = 0;
         isBossSpawning = false;
-        weaponSpawnTimer = 0.0;
+        wave4SpawnTimer = 0.0;
         nextWave();
     }
 
@@ -74,7 +74,7 @@ public class WaveManager {
 
         currentWave++;
         waveInProgress = true;
-        weaponSpawnTimer = 0.0;
+        wave4SpawnTimer = 0.0;
 
         if (hud != null) {
             hud.updateWave(currentWave);
@@ -108,6 +108,20 @@ public class WaveManager {
         ItemType[] weapons = {ItemType.SWORD, ItemType.SPEAR, ItemType.AXE};
         ItemType weaponType = weapons[random(0, weapons.length - 1)];
         spawnItemInArena(weaponType);
+    }
+
+    private void spawnRandomWizard() {
+        double enemyWidth = 150.0;
+        double enemyHeight = 150.0;
+        double margin = 110.0;
+
+        double minX = margin;
+        double maxX = getAppWidth() - margin - enemyWidth;
+        double minY = margin;
+        double maxY = getAppHeight() - margin - enemyHeight;
+
+        Point2D wizardSpawnPos = getRandomBorderPosition(minX, maxX, minY, maxY);
+        spawn("wizardEnemy", wizardSpawnPos.getX(), wizardSpawnPos.getY());
     }
 
     private void spawnItemInArena(ItemType itemType) {
@@ -227,12 +241,13 @@ public class WaveManager {
     public void onUpdate(double tpf) {
         if (!waveInProgress || isBossSpawning) return;
 
-        // Handles 10-second periodic weapon spawns during Wave 4
+        // Periodic weapon and wizard spawns every 10 seconds during Wave 4
         if (currentWave == 4) {
-            weaponSpawnTimer += tpf;
-            if (weaponSpawnTimer >= WEAPON_SPAWN_INTERVAL) {
-                weaponSpawnTimer = 0.0;
+            wave4SpawnTimer += tpf;
+            if (wave4SpawnTimer >= SPAWN_INTERVAL) {
+                wave4SpawnTimer = 0.0;
                 spawnRandomWeapon();
+                spawnRandomWizard();
             }
         }
 
