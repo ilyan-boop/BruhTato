@@ -3,9 +3,9 @@ package BruhTato.Items;
 // NEW: Enum specifying attack stats, hitboxes, and durability for each weapon
 public enum WeaponType {
     DEFAULT("Fists", 1, 0.4, 150.0, -1),   // Standard infinite-use weapon
-    SWORD("Sword", 1, 0.4, 150.0, 20),             // Average stats, circle hitbox, 10 uses
-    SPEAR("Spear", 1, 0.7, 180.0, 20),            // Slower speed, long thin rectangle, 10 uses
-    AXE("Axe", 3, 1.1, 300.0, 10);                // Slowest, highest damage, big circle, 10 uses
+    SWORD("Sword", 2, 0.4, 150.0, 20),             // Average stats, circle hitbox, 10 uses
+    SPEAR("Spear", 2, 0.7, 180.0, 10),            // Slower speed, long thin rectangle, 10 uses
+    AXE("Axe", 3, 1.1, 300.0, 5);                // Slowest, highest damage, big circle, 10 uses
 
     private final String displayName;
     private final int damage;

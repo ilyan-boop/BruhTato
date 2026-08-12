@@ -221,8 +221,8 @@ public class WeaponComponent extends Component {
 
     private int getDamageForCurrentWeapon() {
         return switch (currentWeapon) {
-            case SWORD -> 1;
-            case SPEAR -> 1;
+            case SWORD -> 2;
+            case SPEAR -> 2;
             case AXE -> 3;
             default -> DEFAULT_ATTACK_DAMAGE;
         };
@@ -230,9 +230,9 @@ public class WeaponComponent extends Component {
 
     private double getCooldownForCurrentWeapon() {
         return switch (currentWeapon) {
-            case SWORD -> 0.35;
-            case SPEAR -> 0.6;
-            case AXE -> 1.0;
+            case SWORD -> 0.4;
+            case SPEAR -> 0.7;
+            case AXE -> 1.1;
             default -> DEFAULT_ATTACK_COOLDOWN;
         };
     }
