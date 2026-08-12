@@ -6,6 +6,8 @@ import BruhTato.Utils.EntityType;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.SpawnData;
 import javafx.geometry.Point2D;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -17,6 +19,7 @@ public class WaveManager {
     private int currentWave = 0;
     private int maxWaves = 3;
     private boolean waveInProgress = false;
+    private boolean isBossSpawning = false; // Prevents premature wave completion during boss prompt
 
     private String difficulty = "easy";
     private int[] waveEnemyCounts = {3, 6, 9};
@@ -54,6 +57,7 @@ public class WaveManager {
 
     public void startWaves() {
         currentWave = 0;
+        isBossSpawning = false;
         nextWave();
     }
 
@@ -110,11 +114,11 @@ public class WaveManager {
     }
 
     private void spawnWaveEnemies(int totalCount) {
-        // Boss spawn logic on Wave 4 of Hard difficulty with safe bounds
+        // Boss spawn logic on Wave 4 of Hard difficulty
         if (difficulty.equals("hard") && currentWave == 4) {
             double bossWidth = 300.0;
             double bossHeight = 300.0;
-            double bossMargin = 160.0; // Padded inner margin preventing border overlap
+            double bossMargin = 160.0;
 
             double bossMinX = bossMargin;
             double bossMaxX = getAppWidth() - bossMargin - bossWidth;
@@ -122,7 +126,9 @@ public class WaveManager {
             double bossMaxY = getAppHeight() - bossMargin - bossHeight;
 
             Point2D bossSpawnPos = getRandomBorderPosition(bossMinX, bossMaxX, bossMinY, bossMaxY);
-            spawn("bossEnemy", bossSpawnPos.getX(), bossSpawnPos.getY());
+
+            // Show flashing indicator prompt prior to spawning the Boss
+            showBossSpawnWarningPrompt(bossSpawnPos);
             return;
         }
 
@@ -149,6 +155,59 @@ public class WaveManager {
         }
     }
 
+    // Creates a red flashing indicator circle centered on where the Boss is about to spawn
+    private void showBossSpawnWarningPrompt(Point2D spawnPos) {
+        isBossSpawning = true;
+        double radius = 150.0; // Half of Boss size (300x300)
+
+        // Setting (centerX, centerY) to radius offsets local space so (0,0) aligns with spawnPos top-left
+        Circle warningShape = new Circle(radius, radius, radius, Color.rgb(255, 0, 0, 0.45));
+        warningShape.setStroke(Color.DARKRED);
+        warningShape.setStrokeWidth(4.0);
+
+        Entity warningPrompt = entityBuilder()
+                .at(spawnPos.getX(), spawnPos.getY())
+                .view(warningShape)
+                .buildAndAttach();
+
+        // Flash 1 (Fade out at 0.3s)
+        runOnce(() -> {
+            if (warningPrompt.isActive()) {
+                warningPrompt.getViewComponent().setOpacity(0.15);
+            }
+        }, Duration.seconds(0.3));
+
+        // Flash 2 (Fade in at 0.6s)
+        runOnce(() -> {
+            if (warningPrompt.isActive()) {
+                warningPrompt.getViewComponent().setOpacity(1.0);
+            }
+        }, Duration.seconds(0.6));
+
+        // Flash 3 (Fade out at 0.9s)
+        runOnce(() -> {
+            if (warningPrompt.isActive()) {
+                warningPrompt.getViewComponent().setOpacity(0.15);
+            }
+        }, Duration.seconds(0.9));
+
+        // Flash 4 (Fade in at 1.2s)
+        runOnce(() -> {
+            if (warningPrompt.isActive()) {
+                warningPrompt.getViewComponent().setOpacity(1.0);
+            }
+        }, Duration.seconds(1.2));
+
+        // Despawn prompt visual, spawn Boss, and resume active enemy tracking
+        runOnce(() -> {
+            if (warningPrompt.isActive()) {
+                warningPrompt.removeFromWorld();
+            }
+            spawn("bossEnemy", spawnPos.getX(), spawnPos.getY());
+            isBossSpawning = false;
+        }, Duration.seconds(1.5));
+    }
+
     private Point2D getRandomBorderPosition(double minX, double maxX, double minY, double maxY) {
         int side = random(0, 3);
 
@@ -161,7 +220,8 @@ public class WaveManager {
     }
 
     public void onUpdate(double tpf) {
-        if (!waveInProgress) return;
+        // Do not check for wave clear if wave isn't running or boss is currently spawning
+        if (!waveInProgress || isBossSpawning) return;
 
         long activeEnemies = getGameWorld().getEntitiesByType(EntityType.ENEMY).stream()
                 .filter(e -> e.isActive())
