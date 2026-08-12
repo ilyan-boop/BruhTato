@@ -35,9 +35,9 @@ public class BossEnemyComponent extends BaseEnemyComponent {
     private double fadeTimer = 0.0;
     private final double FADE_DURATION = 1.0;
 
-    // AoE Attack configuration
+    // Scaled AoE Attack configuration
     private int aoeDamage = 20;
-    private double aoeRadius = 180.0;
+    private double aoeRadius = 250.0; // Scaled up to match boss size
     private double castCooldown = 5.0;
     private double castTimer = 0.0;
     private boolean isCasting = false;
@@ -144,7 +144,6 @@ public class BossEnemyComponent extends BaseEnemyComponent {
         }
     }
 
-    // Casts a moving AoE attack centered on the Boss that flashes before dealing damage
     private void startAoeAttack() {
         isCasting = true;
         Point2D center = entity.getCenter();
@@ -195,7 +194,6 @@ public class BossEnemyComponent extends BaseEnemyComponent {
                 double distance = currentPlayer.getCenter().distance(currentBossCenter);
                 double playerRadius = currentPlayer.getWidth() > 0 ? currentPlayer.getWidth() / 2.0 : 50.0;
 
-                // Check overlap based on Boss's live location
                 if (distance <= (aoeRadius + playerRadius)) {
                     Player player = currentPlayer.getObject("playerRef");
                     if (player != null) {
@@ -233,7 +231,6 @@ public class BossEnemyComponent extends BaseEnemyComponent {
         }
     }
 
-    // Constructs the Boss HP bar rendered at the top-center of the screen
     private void createTopHpBar() {
         Text bossTitle = getUIFactoryService().newText("BOSS", Color.DARKRED, 22.0);
 
@@ -270,7 +267,7 @@ public class BossEnemyComponent extends BaseEnemyComponent {
 
     private Point2D computeSeparation() {
         Point2D separation = new Point2D(0, 0);
-        double minDistance = 120.0;
+        double minDistance = 180.0; // Increased spacing for larger boss frame
 
         for (Entity other : FXGL.getGameWorld().getEntitiesByType(EntityType.ENEMY)) {
             if (other == entity) continue;
@@ -313,7 +310,7 @@ public class BossEnemyComponent extends BaseEnemyComponent {
 
     private void updateToHalfHealthVisual() {
         try {
-            Texture halfTexture = texture("Boss_Enemy_HalfHealth.png", 200, 200);
+            Texture halfTexture = texture("Boss_Enemy_HalfHealth.png", 300, 300);
             updateEntityTexture(halfTexture);
         } catch (Exception e) {
             ColorAdjust damagedTint = new ColorAdjust();
@@ -337,7 +334,7 @@ public class BossEnemyComponent extends BaseEnemyComponent {
         entity.getComponentOptional(CollidableComponent.class).ifPresent(c -> c.setValue(false));
 
         try {
-            Texture deadTexture = texture("Boss_Enemy_Dead.png", 200, 200);
+            Texture deadTexture = texture("Boss_Enemy_Dead.png", 300, 300);
             updateEntityTexture(deadTexture);
         } catch (Exception e) {
             ColorAdjust deadTint = new ColorAdjust();

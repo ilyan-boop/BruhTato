@@ -1,5 +1,6 @@
 package BruhTato.Utils;
 
+import BruhTato.Enemies.BossEnemyComponent;
 import BruhTato.Enemies.MeleeEnemyComponent;
 import BruhTato.Enemies.WizardEnemyComponent;
 import BruhTato.Items.ItemComponent;
@@ -27,7 +28,7 @@ public class GameFactory implements EntityFactory {
                 .bbox(new HitBox(new Point2D(25, 25), BoundingShape.circle(50.0)))
                 .view(texture("Melee_Enemy_FullHealth.png", 150, 150))
                 .with(new CollidableComponent(true))
-                .with(new MeleeEnemyComponent(1.5)) // Fixed speed matching player steps
+                .with(new MeleeEnemyComponent(1.5))
                 .build();
     }
 
@@ -38,6 +39,17 @@ public class GameFactory implements EntityFactory {
                 .bbox(new HitBox(new Point2D(30, 30), BoundingShape.circle(80.0)))
                 .view(texture("Wizard_Enemy_FullHealth.png", 200, 200))
                 .with(new WizardEnemyComponent())
+                .with(new CollidableComponent(true))
+                .build();
+    }
+
+    @Spawns("bossEnemy")
+    public Entity newBossEnemy(SpawnData data) {
+        return entityBuilder(data)
+                .type(EntityType.ENEMY)
+                .bbox(new HitBox(new Point2D(30, 30), BoundingShape.circle(120.0))) // Scaled bounding box
+                .view(texture("Boss_Enemy_FullHealth.png", 300, 300))               // Scaled size to 300x300
+                .with(new BossEnemyComponent())
                 .with(new CollidableComponent(true))
                 .build();
     }
@@ -66,7 +78,6 @@ public class GameFactory implements EntityFactory {
                     .with(new ItemComponent(type))
                     .build();
         } catch (Exception e) {
-            // Fallback shape visual if texture assets are not found
             Color fallbackColor = switch (type) {
                 case HEALTH -> Color.LIMEGREEN;
                 case SHIELD -> Color.CYAN;

@@ -18,7 +18,6 @@ public class WaveManager {
     private int maxWaves = 3;
     private boolean waveInProgress = false;
 
-    // Difficulty configuration (Defaults to Easy)
     private String difficulty = "easy";
     private int[] waveEnemyCounts = {3, 6, 9};
     private int[] waveWizardCounts = {0, 0, 0};
@@ -41,8 +40,8 @@ public class WaveManager {
                 waveWizardCounts = new int[]{1, 2, 4};
             }
             case "hard" -> {
-                maxWaves = 4; // 3 standard waves + 1 Boss wave
-                waveEnemyCounts = new int[]{9, 12, 15, 1}; // Wave 4 count reserved for Boss
+                maxWaves = 4;
+                waveEnemyCounts = new int[]{9, 12, 15, 1};
                 waveWizardCounts = new int[]{2, 4, 6, 0};
             }
             default -> { // Easy
@@ -76,9 +75,7 @@ public class WaveManager {
         spawnWaveItems();
     }
 
-    // Spawns weapons and pickup items inside the playable field for the current wave
     private void spawnWaveItems() {
-        // Wipe leftover uncollected items for Medium and Hard difficulties
         if (difficulty.equals("medium") || difficulty.equals("hard")) {
             getGameWorld().getEntitiesByType(EntityType.ITEM).forEach(Entity::removeFromWorld);
         }
@@ -88,19 +85,15 @@ public class WaveManager {
         double minY = 250.0;
         double maxY = getAppHeight() - 250.0;
 
-        // Select a random weapon type on each wave spawn
         ItemType[] weapons = {ItemType.SWORD, ItemType.SPEAR, ItemType.AXE};
         ItemType weaponType = weapons[random(0, weapons.length - 1)];
 
-        // Drop 1: Always a weapon
         spawnItemAtRandomLocation(weaponType, minX, maxX, minY, maxY);
 
         if (difficulty.equals("hard")) {
-            // Hard difficulty: Exactly 2 drops total (1 Weapon + 1 Consumable)
             ItemType consumable = (currentWave >= 2 && random(0, 1) == 1) ? ItemType.SHIELD : ItemType.HEALTH;
             spawnItemAtRandomLocation(consumable, minX, maxX, minY, maxY);
         } else {
-            // Easy & Medium difficulty: Standard drop logic
             spawnItemAtRandomLocation(ItemType.HEALTH, minX, maxX, minY, maxY);
 
             if (currentWave >= 2) {
@@ -117,6 +110,22 @@ public class WaveManager {
     }
 
     private void spawnWaveEnemies(int totalCount) {
+        // Boss spawn logic on Wave 4 of Hard difficulty with safe bounds
+        if (difficulty.equals("hard") && currentWave == 4) {
+            double bossWidth = 300.0;
+            double bossHeight = 300.0;
+            double bossMargin = 160.0; // Padded inner margin preventing border overlap
+
+            double bossMinX = bossMargin;
+            double bossMaxX = getAppWidth() - bossMargin - bossWidth;
+            double bossMinY = bossMargin;
+            double bossMaxY = getAppHeight() - bossMargin - bossHeight;
+
+            Point2D bossSpawnPos = getRandomBorderPosition(bossMinX, bossMaxX, bossMinY, bossMaxY);
+            spawn("bossEnemy", bossSpawnPos.getX(), bossSpawnPos.getY());
+            return;
+        }
+
         double enemyWidth = 150.0;
         double enemyHeight = 150.0;
         double margin = 110.0;
@@ -129,13 +138,11 @@ public class WaveManager {
         int wizardsToSpawn = waveWizardCounts[currentWave - 1];
         int meleeToSpawn = Math.max(0, totalCount - wizardsToSpawn);
 
-        // Spawn Wizards according to wave & difficulty settings
         for (int i = 0; i < wizardsToSpawn; i++) {
             Point2D wizardSpawnPos = getRandomBorderPosition(minX, maxX, minY, maxY);
             spawn("wizardEnemy", wizardSpawnPos.getX(), wizardSpawnPos.getY());
         }
 
-        // Spawn Melee enemies
         for (int i = 0; i < meleeToSpawn; i++) {
             Point2D spawnPos = getRandomBorderPosition(minX, maxX, minY, maxY);
             spawn("enemy", spawnPos.getX(), spawnPos.getY());
